@@ -1,0 +1,11 @@
+line-length = 120
+target-version = "py311"
+
+[lint]
+select = ["E", "F", "W", "I", "B", "UP"]
+# Long user-facing messages and test tables read better unwrapped.
+ignore = ["E501"]
+
+[lint.flake8-bugbear]
+# FastAPI declares request parameters this way.
+extend-immutable-calls = ["fastapi.File", "fastapi.Depends"]

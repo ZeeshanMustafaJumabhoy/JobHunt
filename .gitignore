@@ -1,0 +1,18 @@
+# Secrets and personal data. Never commit these.
+.env
+data/
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Frontend
+node_modules/
+frontend/dist/
+frontend/test-results/
+frontend/playwright-report/
+
+.DS_Store
+.claude/
