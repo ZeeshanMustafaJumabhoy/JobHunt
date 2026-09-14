@@ -1,6 +1,7 @@
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
 import { useState } from 'react'
 import type { Job, JobStatus } from '../api'
+import { ExternalIcon } from '../ui/ui'
 
 const REMOTE: Record<Job['remote_type'], string> = {
   remote_worldwide: 'Remote worldwide',
@@ -47,6 +48,10 @@ function safeHref(url: string): string | undefined {
   }
 }
 
+const actionBtn =
+  'h-11 rounded-md border border-rule bg-sheet px-4 text-sm transition-colors duration-150 hover:border-graphite sm:h-9 sm:px-3'
+const quietBtn = 'h-11 px-3 text-sm text-graphite transition-colors duration-150 hover:text-ink sm:h-9'
+
 export function JobRow({ job, onStatus }: { job: Job; onStatus: (status: JobStatus) => void }) {
   const [open, setOpen] = useState(false)
   const reduce = useReducedMotion()
@@ -55,7 +60,11 @@ export function JobRow({ job, onStatus }: { job: Job; onStatus: (status: JobStat
   const detailsId = `job-${job.id.replace(/[^a-zA-Z0-9_-]/g, '')}`
 
   return (
-    <li className="grid grid-cols-[3.25rem_1fr] gap-x-4 border-b border-rule py-5 sm:grid-cols-[4rem_1fr_auto] sm:gap-x-6">
+    <motion.li
+      layout={reduce ? false : 'position'}
+      exit={reduce ? { opacity: 0 } : { opacity: 0, x: 24, transition: { duration: 0.18, ease: [0.4, 0, 1, 1] } }}
+      className="grid grid-cols-[3.25rem_1fr] gap-x-4 border-b border-rule py-5 sm:grid-cols-[4rem_1fr_auto] sm:gap-x-6"
+    >
       <div className="pt-0.5">
         <span className="block text-2xl leading-none font-semibold tabular-nums sm:text-[1.75rem]" aria-label={`Match score ${job.score} out of 100`}>
           {job.score}
@@ -65,8 +74,14 @@ export function JobRow({ job, onStatus }: { job: Job; onStatus: (status: JobStat
       <div className="min-w-0">
         <h3 className="text-[1.08rem] leading-snug font-medium">
           {href ? (
-            <a href={href} target="_blank" rel="noreferrer noopener" className="hover:text-pen hover:underline hover:decoration-pen/40 hover:underline-offset-4">
+            <a
+              href={href}
+              target="_blank"
+              rel="noreferrer noopener"
+              className="group/link transition-colors duration-150 hover:text-pen hover:underline hover:decoration-pen/40 hover:underline-offset-4"
+            >
               {job.title}
+              <ExternalIcon className="ml-1.5 inline size-3.5 align-[-1px] text-faint transition-colors duration-150 group-hover/link:text-pen" />
             </a>
           ) : (
             job.title
@@ -90,7 +105,7 @@ export function JobRow({ job, onStatus }: { job: Job; onStatus: (status: JobStat
           aria-expanded={open}
           aria-controls={detailsId}
           onClick={() => setOpen(!open)}
-          className="mt-2 text-sm text-graphite underline decoration-rule underline-offset-4 hover:text-ink"
+          className="mt-1 inline-flex min-h-11 items-center text-sm text-graphite underline decoration-rule underline-offset-4 hover:text-ink sm:min-h-9"
         >
           {open ? 'Less' : 'Skills and details'}
         </button>
@@ -146,25 +161,25 @@ export function JobRow({ job, onStatus }: { job: Job; onStatus: (status: JobStat
 
       <div className="col-start-2 mt-4 flex flex-wrap gap-2 sm:col-start-3 sm:mt-0 sm:flex-col sm:items-stretch">
         {job.status !== 'applied' && (
-          <button type="button" onClick={() => onStatus('applied')} className="h-9 rounded-md border border-rule bg-sheet px-3 text-sm hover:border-graphite">
+          <button type="button" onClick={() => onStatus('applied')} className={actionBtn}>
             I applied
           </button>
         )}
         {job.status === 'new' && (
-          <button type="button" onClick={() => onStatus('saved')} className="h-9 rounded-md border border-rule bg-sheet px-3 text-sm hover:border-graphite">
+          <button type="button" onClick={() => onStatus('saved')} className={actionBtn}>
             Save
           </button>
         )}
         {job.status !== 'hidden' ? (
-          <button type="button" onClick={() => onStatus('hidden')} className="h-9 px-3 text-sm text-graphite hover:text-ink">
+          <button type="button" onClick={() => onStatus('hidden')} className={quietBtn}>
             Hide
           </button>
         ) : (
-          <button type="button" onClick={() => onStatus('new')} className="h-9 px-3 text-sm text-graphite hover:text-ink">
+          <button type="button" onClick={() => onStatus('new')} className={quietBtn}>
             Restore
           </button>
         )}
       </div>
-    </li>
+    </motion.li>
   )
 }

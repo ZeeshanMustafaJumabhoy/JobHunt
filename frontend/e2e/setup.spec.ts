@@ -69,9 +69,11 @@ test('a new user completes setup in order and lands on a running search', async 
   expect(api.profile.max_years_required).toBe(8)
 
   await expect(page.getByRole('heading', { name: "What's the least you'd accept?" })).toBeVisible()
+  // Invalid input is flagged at the field itself and blocks continuing.
   await page.getByLabel('Minimum salary').fill('abc')
-  await page.getByRole('button', { name: 'Continue' }).click()
-  await expect(page.getByRole('alert')).toContainText('number')
+  await expect(page.getByLabel('Minimum salary')).toHaveAttribute('aria-invalid', 'true')
+  await expect(page.getByLabel('Minimum salary')).toHaveAccessibleDescription('Enter a number, like 3500.')
+  await expect(page.getByRole('button', { name: 'Continue' })).toBeDisabled()
   await page.getByLabel('Minimum salary').fill('2,500')
   await page.getByRole('button', { name: 'Continue' }).click()
   expect(api.profile.salary.minimum).toBe(2500)
@@ -142,6 +144,22 @@ test('the dashboard groups jobs by tier and moves them between lists', async ({ 
   await page.getByLabel('Show').selectOption({ label: 'Remote worldwide' })
   await expect(page.getByRole('link', { name: 'Software Engineer in Test' })).toBeVisible()
   await expect(page.getByRole('link', { name: 'Senior SDET, Payments' })).toHaveCount(0)
+})
+
+test('an empty review list points to search, and touch targets are finger sized on mobile', async ({ page }, info) => {
+  await useFakeApi(page, { keys: ['GROQ_API_KEY'], jobs: [], profile: { setup_complete: true, titles: ['QA'] } })
+  await page.goto('/')
+  const search = page.getByRole('button', { name: 'Search now' })
+  await expect(search).toHaveCount(1)
+  await expect(page.getByText('Nothing new to review.')).toBeVisible()
+  await snap(page, '11-empty', info.project.name)
+  if (info.project.name === 'mobile') {
+    for (const el of await page.getByRole('tab').all()) {
+      expect((await el.boundingBox())!.height).toBeGreaterThanOrEqual(44)
+    }
+  }
+  await search.click()
+  await expect(page.getByRole('progressbar')).toBeVisible()
 })
 
 test('job links only open http and https urls', async ({ page }) => {

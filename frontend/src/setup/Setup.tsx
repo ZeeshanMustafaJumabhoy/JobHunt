@@ -1,6 +1,7 @@
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
 import { useEffect, useRef, useState } from 'react'
 import { api, type AppState, type KeyStatus, type Profile, type Reference } from '../api'
+import { CheckIcon } from '../ui/ui'
 import { FlowProvider } from './flow'
 import { AiKeyStep, ResumeStep, TitlesStep, WelcomeStep } from './steps-start'
 import {
@@ -148,7 +149,9 @@ export function Setup({
                           current ? 'font-medium text-ink' : done ? 'text-graphite hover:text-ink' : 'text-faint'
                         }`}
                       >
-                        <span className="w-4 text-sm tabular-nums">{done ? '✓' : i + 1}</span>
+                        <span className="flex w-4 justify-center text-sm tabular-nums">
+                          {done ? <CheckIcon className="size-3.5 text-ok" /> : i + 1}
+                        </span>
                         {g}
                       </button>
                       {current && g === 'Preferences' && (
@@ -166,10 +169,30 @@ export function Setup({
 
         <main className="pt-10 pb-24 lg:pt-28">
           {index > 0 && (
-            <p className="mb-6 text-sm text-graphite lg:hidden">
-              {currentGroup}
-              {currentGroup === 'Preferences' ? `, question ${prefPos + 1} of ${prefSteps.length}` : ''}
-            </p>
+            <div className="mb-8 max-w-xl lg:mb-10">
+              <div className="flex items-baseline justify-between gap-4 text-sm text-graphite">
+                <span className="lg:hidden">
+                  {currentGroup}
+                  {currentGroup === 'Preferences' ? `, question ${prefPos + 1} of ${prefSteps.length}` : ''}
+                </span>
+                <span className="tabular-nums lg:ml-auto">
+                  Step {index} of {STEPS.length - 1}
+                </span>
+              </div>
+              <div
+                role="progressbar"
+                aria-label="Setup progress"
+                aria-valuemin={1}
+                aria-valuemax={STEPS.length - 1}
+                aria-valuenow={index}
+                className="mt-2 h-1 overflow-hidden rounded-full bg-rule"
+              >
+                <div
+                  className="h-full origin-left bg-ink transition-transform duration-300 ease-settle"
+                  style={{ transform: `scaleX(${index / (STEPS.length - 1)})` }}
+                />
+              </div>
+            </div>
           )}
           <AnimatePresence mode="wait" initial={false} custom={direction}>
             <motion.div

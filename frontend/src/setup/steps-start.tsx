@@ -137,17 +137,21 @@ export function ResumeStep() {
     void upload(e.dataTransfer.files[0])
   }
 
+  const yearsValue = years.trim() === '' ? null : Number(years)
+  const yearsError =
+    yearsValue !== null && (Number.isNaN(yearsValue) || yearsValue < 0 || yearsValue > 60)
+      ? 'Enter a number from 0 to 60.'
+      : ''
+
   async function save() {
-    const n = years.trim() === '' ? null : Number(years)
-    if (n !== null && (Number.isNaN(n) || n < 0 || n > 60)) throw new Error('Years of experience should be a number from 0 to 60.')
-    setProfile(await api.patchProfile({ skills, years_experience: n }))
+    setProfile(await api.patchProfile({ skills, years_experience: yearsValue }))
   }
 
   return (
     <StepShell
       title="Add your resume"
       lede="The AI reads it once to learn your skills and experience. You can correct anything it gets wrong."
-      canSubmit={p.has_resume && !busy}
+      canSubmit={p.has_resume && !busy && !yearsError}
       onSubmit={save}
     >
       <div className="max-w-2xl">
@@ -226,6 +230,7 @@ export function ResumeStep() {
               inputMode="decimal"
               className="max-w-64"
               value={years}
+              error={yearsError}
               onChange={(e) => setYears(e.target.value)}
             />
           </div>

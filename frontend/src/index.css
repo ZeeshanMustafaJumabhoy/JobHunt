@@ -20,7 +20,7 @@
   --color-sheet: #ffffff;
   --color-ink: #1b2430;
   --color-graphite: #5a6470;
-  --color-faint: #8a929b;
+  --color-faint: #6c747d;
   --color-rule: #dadfd6;
   --color-pen: #2e47c2;
   --color-pen-deep: #22379e;
@@ -73,6 +73,13 @@
   ::selection {
     background: var(--color-marker);
     color: var(--color-ink);
+  }
+
+  button:not(:disabled),
+  select:not(:disabled),
+  [role='tab'],
+  label[for] {
+    cursor: pointer;
   }
 
   :focus-visible {

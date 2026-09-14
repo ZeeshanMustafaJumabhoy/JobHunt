@@ -63,7 +63,7 @@ export function TagInput({
           onChange={(e) => setDraft(e.target.value)}
           onKeyDown={onKey}
           placeholder={placeholder}
-          className="h-11 min-w-0 flex-1 rounded-md border border-rule bg-sheet px-3 text-[0.95rem] placeholder:text-faint focus:border-pen focus:outline-none"
+          className="h-11 min-w-0 flex-1 rounded-md border border-rule bg-sheet px-3 text-base sm:text-[0.95rem] placeholder:text-faint focus:border-pen focus:outline-none"
         />
         <button
           type="button"
