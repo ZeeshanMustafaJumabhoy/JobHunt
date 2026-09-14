@@ -3,9 +3,15 @@ import { api, ApiError, type AppState, type Reference } from './api'
 import { Dashboard } from './jobs/Dashboard'
 import { Settings } from './settings/Settings'
 import { Setup } from './setup/Setup'
-import { Button } from './ui/ui'
+import { Button, Skeleton } from './ui/ui'
 
 type Page = 'jobs' | 'settings'
+
+function navClass(active: boolean) {
+  return `inline-flex min-h-11 items-center border-b-2 transition-colors duration-150 ${
+    active ? 'border-ink text-ink' : 'border-transparent text-graphite hover:text-ink'
+  }`
+}
 
 function pageFromHash(): Page {
   return window.location.hash.startsWith('#/settings') ? 'settings' : 'jobs'
@@ -48,7 +54,13 @@ export default function App() {
   }
 
   if (!state) {
-    return <p className="px-5 pt-28 text-center text-graphite">Opening Shortlist</p>
+    return (
+      <div className="mx-auto max-w-2xl space-y-4 px-5 pt-28" role="status" aria-label="Opening Shortlist">
+        <Skeleton className="h-10 w-3/4" />
+        <Skeleton className="h-4 w-full" />
+        <Skeleton className="h-4 w-5/6" />
+      </div>
+    )
   }
 
   if (!state.profile.setup_complete) {
@@ -72,13 +84,13 @@ export default function App() {
           <span className="marker">Shortlist</span>
         </a>
         <nav aria-label="Main" className="flex gap-6 text-[0.95rem]">
-          <a href="#/jobs" aria-current={page === 'jobs' ? 'page' : undefined} className={page === 'jobs' ? 'text-ink' : 'text-graphite hover:text-ink'}>
+          <a href="#/jobs" aria-current={page === 'jobs' ? 'page' : undefined} className={navClass(page === 'jobs')}>
             Jobs
           </a>
           <a
             href="#/settings"
             aria-current={page === 'settings' ? 'page' : undefined}
-            className={page === 'settings' ? 'text-ink' : 'text-graphite hover:text-ink'}
+            className={navClass(page === 'settings')}
           >
             Settings
           </a>

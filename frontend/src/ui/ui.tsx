@@ -16,7 +16,7 @@ export function Button({
   const styles: Record<ButtonVariant, string> = {
     primary: 'h-11 px-5 bg-pen text-white hover:bg-pen-deep dark:text-paper',
     quiet: 'h-11 px-4 border border-rule bg-sheet text-ink hover:border-graphite',
-    plain: 'h-9 px-1 text-graphite underline decoration-rule underline-offset-4 hover:text-ink hover:decoration-graphite',
+    plain: 'h-11 px-1 sm:h-9 text-graphite underline decoration-rule underline-offset-4 hover:text-ink hover:decoration-graphite',
   }
   return (
     <button
@@ -41,6 +41,7 @@ export function Spinner() {
   )
 }
 
+/** A labelled text input. An error replaces the hint and is announced with the field. */
 export function Field({
   label,
   hint,
@@ -49,6 +50,7 @@ export function Field({
   ...rest
 }: InputHTMLAttributes<HTMLInputElement> & { label: string; hint?: ReactNode; error?: string }) {
   const id = useId()
+  const describedBy = error ? `${id}-error` : hint ? `${id}-hint` : undefined
   return (
     <div className={className}>
       <label htmlFor={id} className="mb-1.5 block text-sm font-medium text-ink">
@@ -57,16 +59,66 @@ export function Field({
       <input
         id={id}
         aria-invalid={error ? true : undefined}
-        aria-describedby={hint ? `${id}-hint` : undefined}
-        className="h-11 w-full rounded-md border border-rule bg-sheet px-3 text-[0.95rem] text-ink placeholder:text-faint focus:border-pen focus:outline-none aria-invalid:border-alert"
+        aria-describedby={describedBy}
+        className="h-11 w-full rounded-md border border-rule bg-sheet px-3 text-base text-ink placeholder:text-faint focus:border-pen focus:outline-none aria-invalid:border-alert sm:text-[0.95rem]"
         {...rest}
       />
-      {hint && (
-        <p id={`${id}-hint`} className="mt-1.5 text-sm text-graphite">
-          {hint}
+      {error ? (
+        <p id={`${id}-error`} className="mt-1.5 flex items-start gap-1.5 text-sm text-alert">
+          <AlertIcon />
+          {error}
         </p>
+      ) : (
+        hint && (
+          <p id={`${id}-hint`} className="mt-1.5 text-sm text-graphite">
+            {hint}
+          </p>
+        )
       )}
     </div>
+  )
+}
+
+const iconProps = {
+  'aria-hidden': true,
+  fill: 'none',
+  stroke: 'currentColor',
+  strokeWidth: 2,
+  strokeLinecap: 'round',
+  strokeLinejoin: 'round',
+  viewBox: '0 0 24 24',
+} as const
+
+export function CheckIcon({ className = 'size-4' }: { className?: string }) {
+  return (
+    <svg {...iconProps} className={className}>
+      <path d="M20 6 9 17l-5-5" />
+    </svg>
+  )
+}
+
+export function CloseIcon({ className = 'size-3.5' }: { className?: string }) {
+  return (
+    <svg {...iconProps} className={className}>
+      <path d="M18 6 6 18M6 6l12 12" />
+    </svg>
+  )
+}
+
+export function AlertIcon({ className = 'mt-0.5 size-4 shrink-0' }: { className?: string }) {
+  return (
+    <svg {...iconProps} className={className}>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M12 8v4.5M12 16h.01" />
+    </svg>
+  )
+}
+
+export function ExternalIcon({ className = 'size-3.5' }: { className?: string }) {
+  return (
+    <svg {...iconProps} className={className}>
+      <path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5" />
+    </svg>
   )
 }
 
@@ -91,7 +143,7 @@ export function Chip({
       aria-pressed={removable ? undefined : selected}
       aria-label={label}
       onClick={onToggle}
-      className={`group inline-flex min-h-9 items-center gap-1.5 rounded-full border px-3.5 text-[0.9rem] transition-colors duration-150 ${
+      className={`group inline-flex min-h-11 items-center gap-1.5 rounded-full border px-4 text-[0.9rem] sm:min-h-9 sm:px-3.5 transition-colors duration-150 ${
         removable
           ? 'border-rule bg-sheet text-ink hover:border-graphite'
           : selected
@@ -99,14 +151,18 @@ export function Chip({
           : 'border-rule bg-sheet text-graphite hover:border-graphite hover:text-ink'
       }`}
     >
+      {!removable && selected && <CheckIcon className="-ml-0.5 size-3.5" />}
       {children}
       {removable && selected && (
-        <span aria-hidden className="text-faint group-hover:text-ink">
-          ×
-        </span>
+        <CloseIcon className="size-3.5 text-faint group-hover:text-ink" />
       )}
     </button>
   )
+}
+
+/** Placeholder block shown while content loads. */
+export function Skeleton({ className = '' }: { className?: string }) {
+  return <span aria-hidden className={`block animate-pulse rounded bg-rule/70 ${className}`} />
 }
 
 /** Text with a highlighter stroke that draws in once, left to right. */
@@ -127,8 +183,10 @@ export function Marked({ children, delay = 0 }: { children: ReactNode; delay?: n
 export function Notice({ tone, children }: { tone: 'error' | 'ok' | 'info'; children: ReactNode }) {
   const color = tone === 'error' ? 'text-alert' : tone === 'ok' ? 'text-ok' : 'text-graphite'
   return (
-    <p role={tone === 'error' ? 'alert' : 'status'} className={`text-sm ${color}`}>
-      {children}
+    <p role={tone === 'error' ? 'alert' : 'status'} className={`flex items-start gap-1.5 text-sm ${color}`}>
+      {tone === 'error' && <AlertIcon />}
+      {tone === 'ok' && <CheckIcon className="mt-0.5 size-4 shrink-0" />}
+      <span>{children}</span>
     </p>
   )
 }

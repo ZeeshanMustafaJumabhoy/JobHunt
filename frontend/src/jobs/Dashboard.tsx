@@ -1,7 +1,9 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { AnimatePresence } from 'motion/react'
+import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
 import { api, ApiError, type AppState, type Job, type JobStatus, type Tier } from '../api'
 import { JobRow } from './JobRow'
 import { RunPanel } from './RunPanel'
+import { Button, Skeleton } from '../ui/ui'
 
 const VIEWS: { status: JobStatus; label: string }[] = [
   { status: 'new', label: 'To review' },
@@ -121,7 +123,7 @@ export function Dashboard({ state, onState }: { state: AppState; onState: (s: Ap
               role="tab"
               aria-selected={view === v.status}
               onClick={() => setView(v.status)}
-              className={`h-9 rounded-md px-3 text-[0.95rem] transition-colors duration-150 ${
+              className={`h-11 rounded-md px-3.5 text-[0.95rem] transition-colors duration-150 sm:h-9 sm:px-3 ${
                 view === v.status ? 'bg-ink text-paper' : 'text-graphite hover:text-ink'
               }`}
             >
@@ -135,7 +137,7 @@ export function Dashboard({ state, onState }: { state: AppState; onState: (s: Ap
           <select
             value={place}
             onChange={(e) => setPlace(Number(e.target.value))}
-            className="h-9 rounded-md border border-rule bg-sheet px-2 text-[0.95rem] text-ink focus:border-pen focus:outline-none"
+            className="h-11 rounded-md border border-rule bg-sheet px-2 text-[0.95rem] text-ink focus:border-pen focus:outline-none sm:h-9"
           >
             {PLACES.map((p) => (
               <option key={p.value} value={p.value}>
@@ -149,9 +151,25 @@ export function Dashboard({ state, onState }: { state: AppState; onState: (s: Ap
       {error && <p role="alert" className="mt-6 text-sm text-alert">{error}</p>}
 
       {jobs === null ? (
-        <p className="mt-16 text-graphite">Loading jobs</p>
+        <div className="mt-12" role="status" aria-label="Loading jobs">
+          {[0, 1, 2].map((i) => (
+            <div key={i} className="grid grid-cols-[3.25rem_1fr] gap-x-4 border-b border-rule py-6 sm:grid-cols-[4rem_1fr] sm:gap-x-6">
+              <Skeleton className="h-7 w-10" />
+              <div className="space-y-2.5">
+                <Skeleton className="h-5 w-2/3 max-w-sm" />
+                <Skeleton className="h-4 w-1/2 max-w-xs" />
+                <Skeleton className="h-4 w-5/6 max-w-lg" />
+              </div>
+            </div>
+          ))}
+        </div>
       ) : visible.length === 0 ? (
-        <Empty view={view} running={state.run.running} filtered={place !== -1 && (jobs?.length ?? 0) > 0} />
+        <Empty
+          view={view}
+          running={state.run.running}
+          filtered={place !== -1 && (jobs?.length ?? 0) > 0}
+          onShowAll={() => setPlace(-1)}
+        />
       ) : view === 'new' ? (
         TIERS.map(({ tier, title, note }) => {
           const group = visible.filter((j) => j.tier === tier)
@@ -165,29 +183,64 @@ export function Dashboard({ state, onState }: { state: AppState; onState: (s: Ap
                 <p className="text-sm text-graphite">{note}</p>
               </div>
               <ul>
-                {group.map((j) => (
-                  <JobRow key={j.id} job={j} onStatus={(s) => void changeStatus(j, s)} />
-                ))}
+                <AnimatePresence initial={false}>
+                  {group.map((j) => (
+                    <JobRow key={j.id} job={j} onStatus={(s) => void changeStatus(j, s)} />
+                  ))}
+                </AnimatePresence>
               </ul>
             </section>
           )
         })
       ) : (
         <ul className="mt-8 border-t border-ink">
-          {visible.map((j) => (
-            <JobRow key={j.id} job={j} onStatus={(s) => void changeStatus(j, s)} />
-          ))}
+          <AnimatePresence initial={false}>
+            {visible.map((j) => (
+              <JobRow key={j.id} job={j} onStatus={(s) => void changeStatus(j, s)} />
+            ))}
+          </AnimatePresence>
         </ul>
       )}
     </div>
   )
 }
 
-function Empty({ view, running, filtered }: { view: JobStatus; running: boolean; filtered: boolean }) {
+function Empty({
+  view,
+  running,
+  filtered,
+  onShowAll,
+}: {
+  view: JobStatus
+  running: boolean
+  filtered: boolean
+  onShowAll: () => void
+}) {
   let text: string
-  if (filtered) text = 'Nothing here for this place. Choose Everywhere to see the rest.'
-  else if (view !== 'new') text = { saved: 'Jobs you save appear here.', applied: 'Mark jobs as applied to track them here.', hidden: 'Hidden jobs appear here.', new: '' }[view]
-  else if (running) text = 'Jobs appear here as the search reads them.'
-  else text = 'Nothing to review. Run a search, or check back after tomorrow’s.'
-  return <p className="mt-16 max-w-[48ch] text-[1.05rem] text-graphite">{text}</p>
+  let action: ReactNode = null
+  if (filtered) {
+    text = 'Nothing here for this place.'
+    action = (
+      <Button variant="quiet" onClick={onShowAll}>
+        Show everywhere
+      </Button>
+    )
+  } else if (view !== 'new') {
+    text = {
+      saved: 'Jobs you save appear here.',
+      applied: 'Mark jobs as applied to keep track of them here.',
+      hidden: 'Jobs you hide appear here.',
+      new: '',
+    }[view]
+  } else if (running) {
+    text = 'Jobs appear here as the search reads them.'
+  } else {
+    text = 'Nothing new to review. Use Search now above, or check back after the next daily search.'
+  }
+  return (
+    <div className="mt-16 flex max-w-[52ch] flex-col items-start gap-5">
+      <p className="text-[1.05rem] text-graphite">{text}</p>
+      {action}
+    </div>
+  )
 }

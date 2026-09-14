@@ -293,9 +293,11 @@ export function SalaryStep() {
   const [period, setPeriod] = useState(s.period)
   const [strict, setStrict] = useState(s.strict)
 
+  const parsed = minimum.trim() === '' ? null : Number(minimum.replace(/[,\s]/g, ''))
+  const minimumError = parsed !== null && (Number.isNaN(parsed) || parsed < 0) ? 'Enter a number, like 3500.' : ''
+
   async function save(clear = false) {
-    const value = clear || minimum.trim() === '' ? null : Number(minimum.replace(/[,\s]/g, ''))
-    if (value !== null && (Number.isNaN(value) || value < 0)) throw new Error('Enter the salary as a number, like 3500.')
+    const value = clear ? null : parsed
     setProfile(await api.patchProfile({ salary: { minimum: value, currency, period, strict } }))
   }
 
@@ -305,6 +307,7 @@ export function SalaryStep() {
       title="What's the least you'd accept?"
       lede="Most postings don't list a salary, so this only affects the ones that do. Amounts are compared in the same currency only."
       onSubmit={() => save()}
+      canSubmit={!minimumError}
       skipLabel="Skip this"
       onSkip={async () => {
         await save(true)
@@ -312,12 +315,13 @@ export function SalaryStep() {
       }}
     >
       <div className="max-w-xl space-y-8">
-        <div className="flex flex-wrap items-end gap-3">
+        <div className="flex flex-wrap items-start gap-3">
           <Field
             label="Minimum salary"
             inputMode="numeric"
             placeholder="e.g. 3500"
             className="w-44"
+            error={minimumError}
             value={minimum}
             onChange={(e) => setMinimum(e.target.value)}
           />
@@ -336,7 +340,7 @@ export function SalaryStep() {
               ))}
             </select>
           </div>
-          <div className="flex gap-2 pb-1" role="radiogroup" aria-label="Pay period">
+          <div className="flex gap-2 sm:pt-7" role="radiogroup" aria-label="Pay period">
             <Chip selected={period === 'month'} onToggle={() => setPeriod('month')}>
               per month
             </Chip>
