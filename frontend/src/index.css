@@ -1,0 +1,116 @@
+@import '@fontsource/schibsted-grotesk/400.css';
+@import '@fontsource/schibsted-grotesk/500.css';
+@import '@fontsource/schibsted-grotesk/600.css';
+@import '@fontsource/schibsted-grotesk/700.css';
+@import 'tailwindcss';
+
+/*
+  Shortlist palette.
+  paper      cool off-white page
+  ink        blue-black text
+  graphite   secondary text
+  rule       hairlines and borders
+  pen        the one action color, fountain-pen blue
+  marker     highlighter yellow, used only to mark what matches
+*/
+@theme {
+  --font-sans: 'Schibsted Grotesk', ui-sans-serif, system-ui, sans-serif;
+
+  --color-paper: #f5f6f3;
+  --color-sheet: #ffffff;
+  --color-ink: #1b2430;
+  --color-graphite: #5a6470;
+  --color-faint: #8a929b;
+  --color-rule: #dadfd6;
+  --color-pen: #2e47c2;
+  --color-pen-deep: #22379e;
+  --color-marker: #f2e35c;
+  --color-marker-soft: #f7efa3;
+  --color-alert: #b3261e;
+  --color-ok: #2f6f4e;
+
+  --text-display: 2.5rem;
+  --text-display--line-height: 1.08;
+  --text-display--letter-spacing: -0.025em;
+  --text-title: 1.75rem;
+  --text-title--line-height: 1.15;
+  --text-title--letter-spacing: -0.015em;
+
+  --ease-settle: cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-paper: #151a21;
+    --color-sheet: #1c222b;
+    --color-ink: #e8ebe6;
+    --color-graphite: #a3abb3;
+    --color-faint: #78818a;
+    --color-rule: #2d353f;
+    --color-pen: #8ea0ff;
+    --color-pen-deep: #b3c0ff;
+    --color-marker: #6b6320;
+    --color-marker-soft: #4a4520;
+    --color-alert: #ff8a80;
+    --color-ok: #7fcfa3;
+  }
+}
+
+@layer base {
+  html {
+    background: var(--color-paper);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  body {
+    margin: 0;
+    min-height: 100dvh;
+  }
+
+  ::selection {
+    background: var(--color-marker);
+    color: var(--color-ink);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-pen);
+    outline-offset: 2px;
+  }
+
+  /* Headings receive focus programmatically when a step changes. That's for
+     screen readers, not a visible ring. */
+  [tabindex='-1']:focus {
+    outline: none;
+  }
+}
+
+/* Highlighter stroke behind text. The uneven, slanted ends are what make it read
+   as a pen mark rather than a tag. */
+.marker {
+  background-image: linear-gradient(
+    100deg,
+    transparent 0.3em,
+    var(--color-marker) 0.45em,
+    var(--color-marker) calc(100% - 0.4em),
+    transparent calc(100% - 0.2em)
+  );
+  background-repeat: no-repeat;
+  background-size: 100% 62%;
+  background-position: 0 70%;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+  padding-inline: 0.15em;
+  margin-inline: -0.15em;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
