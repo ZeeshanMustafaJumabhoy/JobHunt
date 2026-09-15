@@ -55,7 +55,9 @@
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme='light']) {
     color-scheme: dark;
-    background-image: none;
+    /* Same photo, dimmed and tinted so it reads as part of the dark theme
+       instead of a light image pasted on black. */
+    background-image: linear-gradient(rgb(11 14 20 / 0.82), rgb(11 14 20 / 0.82)), url('/background.jpg');
     --color-canvas: #0b0e14;
     --color-surface: #131722;
     --color-subtle: #1a1f2c;
@@ -84,7 +86,7 @@
 
 :root[data-theme='dark'] {
   color-scheme: dark;
-  background-image: none;
+  background-image: linear-gradient(rgb(11 14 20 / 0.82), rgb(11 14 20 / 0.82)), url('/background.jpg');
   --color-canvas: #0b0e14;
   --color-surface: #131722;
   --color-subtle: #1a1f2c;
