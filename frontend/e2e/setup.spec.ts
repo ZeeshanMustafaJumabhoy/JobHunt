@@ -151,7 +151,7 @@ test('an empty review list points to search, and touch targets are finger sized 
   await page.goto('/')
   const search = page.getByRole('button', { name: 'Search now' })
   await expect(search).toHaveCount(1)
-  await expect(page.getByText('Nothing new to review.')).toBeVisible()
+  await expect(page.getByText('Nothing new to review')).toBeVisible()
   await snap(page, '11-empty', info.project.name)
   if (info.project.name === 'mobile') {
     for (const el of await page.getByRole('tab').all()) {

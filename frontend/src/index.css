@@ -1,64 +1,80 @@
-@import '@fontsource/schibsted-grotesk/400.css';
-@import '@fontsource/schibsted-grotesk/500.css';
-@import '@fontsource/schibsted-grotesk/600.css';
-@import '@fontsource/schibsted-grotesk/700.css';
+@import '@fontsource-variable/geist';
 @import 'tailwindcss';
 
 /*
-  Shortlist palette.
-  paper      cool off-white page
-  ink        blue-black text
-  graphite   secondary text
-  rule       hairlines and borders
-  pen        the one action color, fountain-pen blue
-  marker     highlighter yellow, used only to mark what matches
+  Shortlist design tokens. Light, clean product UI.
+
+  canvas    page background, a cool near-white
+  surface   cards and panels
+  subtle    wells, hover fills
+  ink       primary text        muted   secondary text     faint  tertiary / icons
+  line      borders             brand   indigo action color
+  success / warning / danger    status, each with a soft fill
 */
 @theme {
-  --font-sans: 'Schibsted Grotesk', ui-sans-serif, system-ui, sans-serif;
+  --font-sans: 'Geist Variable', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
 
-  --color-paper: #f5f6f3;
-  --color-sheet: #ffffff;
-  --color-ink: #1b2430;
-  --color-graphite: #5a6470;
-  --color-faint: #6c747d;
-  --color-rule: #dadfd6;
-  --color-pen: #2e47c2;
-  --color-pen-deep: #22379e;
-  --color-marker: #f2e35c;
-  --color-marker-soft: #f7efa3;
-  --color-alert: #b3261e;
-  --color-ok: #2f6f4e;
+  --color-canvas: #f6f7fb;
+  --color-surface: #ffffff;
+  --color-subtle: #f1f3f9;
+  --color-ink: #0f172a;
+  --color-muted: #5b6578;
+  --color-faint: #8a93a6;
+  --color-line: #e3e7ef;
+  --color-line-strong: #cfd5e1;
 
-  --text-display: 2.5rem;
-  --text-display--line-height: 1.08;
-  --text-display--letter-spacing: -0.025em;
-  --text-title: 1.75rem;
-  --text-title--line-height: 1.15;
-  --text-title--letter-spacing: -0.015em;
+  --color-brand: #4f46e5;
+  --color-brand-hover: #4338ca;
+  --color-brand-soft: #eef0ff;
+  --color-brand-ink: #3730a3;
+  --color-brand-2: #3b82f6;
 
-  --ease-settle: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --color-success: #047857;
+  --color-success-soft: #ecfdf5;
+  --color-warning: #b45309;
+  --color-warning-soft: #fffbeb;
+  --color-danger: #dc2626;
+  --color-danger-soft: #fef2f2;
+
+  --shadow-card: 0 1px 2px rgb(15 23 42 / 0.04), 0 1px 3px rgb(15 23 42 / 0.05);
+  --shadow-raised: 0 4px 12px -2px rgb(15 23 42 / 0.08), 0 2px 4px -2px rgb(15 23 42 / 0.05);
+  --shadow-pop: 0 16px 40px -12px rgb(15 23 42 / 0.18);
+  --shadow-brand: 0 1px 2px rgb(79 70 229 / 0.3), inset 0 1px 0 rgb(255 255 255 / 0.18);
+
+  --ease-out-quart: cubic-bezier(0.25, 1, 0.5, 1);
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --color-paper: #151a21;
-    --color-sheet: #1c222b;
-    --color-ink: #e8ebe6;
-    --color-graphite: #a3abb3;
-    --color-faint: #78818a;
-    --color-rule: #2d353f;
-    --color-pen: #8ea0ff;
-    --color-pen-deep: #b3c0ff;
-    --color-marker: #6b6320;
-    --color-marker-soft: #4a4520;
-    --color-alert: #ff8a80;
-    --color-ok: #7fcfa3;
+    --color-canvas: #0b0e14;
+    --color-surface: #131722;
+    --color-subtle: #1a1f2c;
+    --color-ink: #e8ebf2;
+    --color-muted: #a1a9b8;
+    --color-faint: #717a8c;
+    --color-line: #242a38;
+    --color-line-strong: #323a4b;
+    --color-brand: #818cf8;
+    --color-brand-hover: #a5b4fc;
+    --color-brand-soft: #1e1b4b;
+    --color-brand-ink: #c7d2fe;
+    --color-brand-2: #60a5fa;
+    --color-success: #34d399;
+    --color-success-soft: #052e22;
+    --color-warning: #fbbf24;
+    --color-warning-soft: #2d2206;
+    --color-danger: #f87171;
+    --color-danger-soft: #2d0f12;
+    --shadow-card: 0 0 0 1px rgb(255 255 255 / 0.02);
+    --shadow-raised: 0 8px 20px -6px rgb(0 0 0 / 0.5);
+    --shadow-pop: 0 20px 48px -12px rgb(0 0 0 / 0.6);
+    --shadow-brand: inset 0 1px 0 rgb(255 255 255 / 0.12);
   }
 }
 
 @layer base {
   html {
-    background: var(--color-paper);
+    background: var(--color-canvas);
     color: var(--color-ink);
     font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
@@ -71,8 +87,7 @@
   }
 
   ::selection {
-    background: var(--color-marker);
-    color: var(--color-ink);
+    background: color-mix(in srgb, var(--color-brand) 22%, transparent);
   }
 
   button:not(:disabled),
@@ -83,34 +98,36 @@
   }
 
   :focus-visible {
-    outline: 2px solid var(--color-pen);
+    outline: 2px solid var(--color-brand);
     outline-offset: 2px;
   }
 
-  /* Headings receive focus programmatically when a step changes. That's for
-     screen readers, not a visible ring. */
   [tabindex='-1']:focus {
     outline: none;
   }
 }
 
-/* Highlighter stroke behind text. The uneven, slanted ends are what make it read
-   as a pen mark rather than a tag. */
-.marker {
-  background-image: linear-gradient(
-    100deg,
-    transparent 0.3em,
-    var(--color-marker) 0.45em,
-    var(--color-marker) calc(100% - 0.4em),
-    transparent calc(100% - 0.2em)
-  );
-  background-repeat: no-repeat;
-  background-size: 100% 62%;
-  background-position: 0 70%;
-  box-decoration-break: clone;
-  -webkit-box-decoration-break: clone;
-  padding-inline: 0.15em;
-  margin-inline: -0.15em;
+@layer components {
+  .card {
+    background: var(--color-surface);
+    border: 1px solid var(--color-line);
+    border-radius: 1rem;
+    box-shadow: var(--shadow-card);
+  }
+
+  /* Soft brand wash behind the welcome hero and page headers. */
+  .brand-wash {
+    background:
+      radial-gradient(60rem 28rem at 15% -10%, color-mix(in srgb, var(--color-brand) 12%, transparent), transparent 70%),
+      radial-gradient(40rem 24rem at 95% 0%, color-mix(in srgb, var(--color-brand-2) 10%, transparent), transparent 70%);
+  }
+
+  .text-gradient {
+    background: linear-gradient(90deg, var(--color-brand), var(--color-brand-2));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

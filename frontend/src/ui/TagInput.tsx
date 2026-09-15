@@ -1,5 +1,6 @@
+import { Plus } from 'lucide-react'
 import { useId, useState, type KeyboardEvent } from 'react'
-import { Chip } from './ui'
+import { Button, Chip } from './ui'
 
 /** A list of short phrases the user can remove and add to. */
 export function TagInput({
@@ -63,18 +64,13 @@ export function TagInput({
           onChange={(e) => setDraft(e.target.value)}
           onKeyDown={onKey}
           placeholder={placeholder}
-          className="h-11 min-w-0 flex-1 rounded-md border border-rule bg-sheet px-3 text-base sm:text-[0.95rem] placeholder:text-faint focus:border-pen focus:outline-none"
+          className="h-11 min-w-0 flex-1 rounded-[10px] border border-line bg-surface px-3.5 text-base shadow-card transition-[border-color,box-shadow] duration-150 placeholder:text-faint hover:border-line-strong focus:border-brand focus:ring-4 focus:ring-brand/15 focus:outline-none sm:text-[0.9375rem]"
         />
-        <button
-          type="button"
-          onClick={add}
-          disabled={!draft.trim()}
-          className="h-11 rounded-md border border-rule bg-sheet px-4 text-[0.95rem] hover:border-graphite disabled:opacity-40"
-        >
+        <Button variant="secondary" icon={Plus} onClick={add} disabled={!draft.trim()}>
           Add
-        </button>
+        </Button>
       </div>
-      {hint && <p className="mt-1.5 text-sm text-graphite">{hint}</p>}
+      {hint && <p className="mt-1.5 text-sm text-muted">{hint}</p>}
     </div>
   )
 }

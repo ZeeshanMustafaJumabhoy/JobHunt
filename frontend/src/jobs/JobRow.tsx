@@ -1,7 +1,8 @@
+import { Bookmark, Building2, Check, ChevronDown, Clock, ExternalLink, EyeOff, MapPin, RotateCcw, Wallet } from 'lucide-react'
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
 import { useState } from 'react'
 import type { Job, JobStatus } from '../api'
-import { ExternalIcon } from '../ui/ui'
+import { Badge, Button, ScoreRing } from '../ui/ui'
 
 const REMOTE: Record<Job['remote_type'], string> = {
   remote_worldwide: 'Remote worldwide',
@@ -48,10 +49,6 @@ function safeHref(url: string): string | undefined {
   }
 }
 
-const actionBtn =
-  'h-11 rounded-md border border-rule bg-sheet px-4 text-sm transition-colors duration-150 hover:border-graphite sm:h-9 sm:px-3'
-const quietBtn = 'h-11 px-3 text-sm text-graphite transition-colors duration-150 hover:text-ink sm:h-9'
-
 export function JobRow({ job, onStatus }: { job: Job; onStatus: (status: JobStatus) => void }) {
   const [open, setOpen] = useState(false)
   const reduce = useReducedMotion()
@@ -62,123 +59,149 @@ export function JobRow({ job, onStatus }: { job: Job; onStatus: (status: JobStat
   return (
     <motion.li
       layout={reduce ? false : 'position'}
-      exit={reduce ? { opacity: 0 } : { opacity: 0, x: 24, transition: { duration: 0.18, ease: [0.4, 0, 1, 1] } }}
-      className="grid grid-cols-[3.25rem_1fr] gap-x-4 border-b border-rule py-5 sm:grid-cols-[4rem_1fr_auto] sm:gap-x-6"
+      exit={reduce ? { opacity: 0 } : { opacity: 0, scale: 0.98, transition: { duration: 0.16, ease: [0.4, 0, 1, 1] } }}
+      className="card group p-5 transition-shadow duration-200 hover:shadow-raised sm:p-6"
     >
-      <div className="pt-0.5">
-        <span className="block text-2xl leading-none font-semibold tabular-nums sm:text-[1.75rem]" aria-label={`Match score ${job.score} out of 100`}>
-          {job.score}
-        </span>
-      </div>
+      <div className="flex gap-4 sm:gap-5">
+        <ScoreRing score={job.score} />
 
-      <div className="min-w-0">
-        <h3 className="text-[1.08rem] leading-snug font-medium">
-          {href ? (
-            <a
-              href={href}
-              target="_blank"
-              rel="noreferrer noopener"
-              className="group/link transition-colors duration-150 hover:text-pen hover:underline hover:decoration-pen/40 hover:underline-offset-4"
-            >
-              {job.title}
-              <ExternalIcon className="ml-1.5 inline size-3.5 align-[-1px] text-faint transition-colors duration-150 group-hover/link:text-pen" />
-            </a>
-          ) : (
-            job.title
-          )}
-        </h3>
-        <p className="mt-0.5 text-[0.95rem] text-graphite">
-          {job.company}, {job.location}
-        </p>
-        <p className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm">
-          <span className="text-ink">{job.bucket_label}</span>
-          {facts(job).map((f) => (
-            <span key={f.text} className={f.tone === 'good' ? 'text-ok' : f.tone === 'warn' ? 'text-alert' : 'text-graphite'}>
-              {f.text}
-            </span>
-          ))}
-        </p>
-        {job.reason && <p className="mt-3 max-w-[68ch] text-[0.95rem] leading-relaxed">{job.reason}</p>}
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-3">
+            <div className="min-w-0">
+              <h3 className="text-[1.0625rem] leading-snug font-semibold tracking-tight">
+                {href ? (
+                  <a
+                    href={href}
+                    target="_blank"
+                    rel="noreferrer noopener"
+                    className="inline-flex items-center gap-1.5 transition-colors duration-150 hover:text-brand"
+                  >
+                    {job.title}
+                    <ExternalLink aria-hidden className="size-3.5 text-faint transition-colors group-hover:text-brand" />
+                  </a>
+                ) : (
+                  job.title
+                )}
+              </h3>
+              <p className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted">
+                <span className="inline-flex items-center gap-1.5">
+                  <Building2 aria-hidden className="size-4 text-faint" />
+                  {job.company}
+                </span>
+                <span className="inline-flex items-center gap-1.5">
+                  <MapPin aria-hidden className="size-4 text-faint" />
+                  {job.location}
+                </span>
+                {job.age_days !== null && (
+                  <span className="inline-flex items-center gap-1.5">
+                    <Clock aria-hidden className="size-4 text-faint" />
+                    {posted(job.age_days)}
+                  </span>
+                )}
+              </p>
+            </div>
 
-        <button
-          type="button"
-          aria-expanded={open}
-          aria-controls={detailsId}
-          onClick={() => setOpen(!open)}
-          className="mt-1 inline-flex min-h-11 items-center text-sm text-graphite underline decoration-rule underline-offset-4 hover:text-ink sm:min-h-9"
-        >
-          {open ? 'Less' : 'Skills and details'}
-        </button>
-        <AnimatePresence initial={false}>
-          {open && (
-            <motion.div
-              id={detailsId}
-              initial={reduce ? false : { height: 0, opacity: 0 }}
-              animate={{ height: 'auto', opacity: 1 }}
-              exit={reduce ? { opacity: 0 } : { height: 0, opacity: 0 }}
-              transition={{ duration: 0.2, ease: [0.2, 0.8, 0.2, 1] }}
-              className="overflow-hidden"
-            >
-              <dl className="mt-4 grid max-w-2xl grid-cols-[7.5rem_1fr] gap-x-4 gap-y-2.5 text-sm">
-                {job.matched_skills.length > 0 && (
-                  <>
-                    <dt className="text-graphite">You have</dt>
-                    <dd className="leading-relaxed">
-                      {job.matched_skills.map((s, i) => (
-                        <span key={s}>
-                          <span className="marker">{s}</span>
-                          {i < job.matched_skills.length - 1 ? ', ' : ''}
-                        </span>
-                      ))}
-                    </dd>
-                  </>
-                )}
-                {job.missing_skills.length > 0 && (
-                  <>
-                    <dt className="text-graphite">They also want</dt>
-                    <dd>{job.missing_skills.join(', ')}</dd>
-                  </>
-                )}
-                {salary && (
-                  <>
-                    <dt className="text-graphite">Salary</dt>
-                    <dd>{salary}</dd>
-                  </>
-                )}
-                <dt className="text-graphite">Found on</dt>
-                <dd>
-                  {job.source}
-                  {job.age_days !== null ? `. ${posted(job.age_days)}.` : ''}
-                </dd>
-              </dl>
-              {job.description && (
-                <p className="mt-4 max-w-[68ch] text-sm leading-relaxed text-graphite">{job.description.slice(0, 600)}…</p>
+            <div className="flex items-center gap-1.5">
+              {job.status !== 'applied' && (
+                <Button variant="primary" size="sm" icon={Check} onClick={() => onStatus('applied')}>
+                  I applied
+                </Button>
               )}
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
+              {job.status === 'new' && (
+                <Button variant="secondary" size="sm" icon={Bookmark} onClick={() => onStatus('saved')}>
+                  Save
+                </Button>
+              )}
+              {job.status !== 'hidden' ? (
+                <Button variant="ghost" size="sm" icon={EyeOff} onClick={() => onStatus('hidden')}>
+                  Hide
+                </Button>
+              ) : (
+                <Button variant="ghost" size="sm" icon={RotateCcw} onClick={() => onStatus('new')}>
+                  Restore
+                </Button>
+              )}
+            </div>
+          </div>
 
-      <div className="col-start-2 mt-4 flex flex-wrap gap-2 sm:col-start-3 sm:mt-0 sm:flex-col sm:items-stretch">
-        {job.status !== 'applied' && (
-          <button type="button" onClick={() => onStatus('applied')} className={actionBtn}>
-            I applied
+          <div className="mt-3 flex flex-wrap gap-1.5">
+            <Badge tone="brand">{job.bucket_label}</Badge>
+            {facts(job).map((f) => (
+              <Badge key={f.text} tone={f.tone === 'good' ? 'success' : f.tone === 'warn' ? 'danger' : 'neutral'}>
+                {f.text}
+              </Badge>
+            ))}
+          </div>
+
+          {job.reason && <p className="mt-3 max-w-[70ch] text-[0.9375rem] leading-relaxed text-ink/85">{job.reason}</p>}
+
+          <button
+            type="button"
+            aria-expanded={open}
+            aria-controls={detailsId}
+            onClick={() => setOpen(!open)}
+            className="mt-2 inline-flex min-h-11 items-center gap-1 text-sm font-medium text-brand hover:text-brand-hover sm:min-h-9"
+          >
+            {open ? 'Less' : 'Skills and details'}
+            <ChevronDown aria-hidden className={`size-4 transition-transform duration-200 ${open ? 'rotate-180' : ''}`} />
           </button>
-        )}
-        {job.status === 'new' && (
-          <button type="button" onClick={() => onStatus('saved')} className={actionBtn}>
-            Save
-          </button>
-        )}
-        {job.status !== 'hidden' ? (
-          <button type="button" onClick={() => onStatus('hidden')} className={quietBtn}>
-            Hide
-          </button>
-        ) : (
-          <button type="button" onClick={() => onStatus('new')} className={quietBtn}>
-            Restore
-          </button>
-        )}
+
+          <AnimatePresence initial={false}>
+            {open && (
+              <motion.div
+                id={detailsId}
+                initial={reduce ? false : { height: 0, opacity: 0 }}
+                animate={{ height: 'auto', opacity: 1 }}
+                exit={reduce ? { opacity: 0 } : { height: 0, opacity: 0 }}
+                transition={{ duration: 0.22, ease: [0.25, 1, 0.5, 1] }}
+                className="overflow-hidden"
+              >
+                <div className="mt-3 grid gap-4 rounded-xl bg-subtle/70 p-4 sm:grid-cols-2">
+                  {job.matched_skills.length > 0 && (
+                    <div>
+                      <p className="mb-2 text-xs font-medium text-muted">You have</p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {job.matched_skills.map((s) => (
+                          <Badge key={s} tone="success" icon={Check}>
+                            {s}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {job.missing_skills.length > 0 && (
+                    <div>
+                      <p className="mb-2 text-xs font-medium text-muted">They also want</p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {job.missing_skills.map((s) => (
+                          <Badge key={s} tone="warning">
+                            {s}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {salary && (
+                    <div>
+                      <p className="mb-1 text-xs font-medium text-muted">Salary</p>
+                      <p className="inline-flex items-center gap-1.5 text-sm font-medium">
+                        <Wallet aria-hidden className="size-4 text-faint" />
+                        {salary}
+                      </p>
+                    </div>
+                  )}
+                  <div>
+                    <p className="mb-1 text-xs font-medium text-muted">Found on</p>
+                    <p className="text-sm font-medium">{job.source}</p>
+                  </div>
+                  {job.description && (
+                    <p className="text-sm leading-relaxed text-muted sm:col-span-2">{job.description.slice(0, 600)}…</p>
+                  )}
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
       </div>
     </motion.li>
   )
