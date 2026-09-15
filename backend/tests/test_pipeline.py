@@ -109,6 +109,14 @@ def test_tier_for(score, tier):
     assert pipeline.tier_for(score) == tier
 
 
+def test_tier_for_respects_custom_minimum():
+    # Raising the bar reclassifies a middling score as low without touching apply/strong.
+    assert pipeline.tier_for(60, min_match_score=70) == "low"
+    assert pipeline.tier_for(82, min_match_score=70) == "apply"
+    # Lowering it below the old fixed floor surfaces scores that used to be hidden.
+    assert pipeline.tier_for(45, min_match_score=40) == "maybe"
+
+
 def test_salary_below_minimum_only_compares_like_with_like():
     p = Profile(salary=Salary(minimum=3000, currency="USD", period="month"))
     assert pipeline.salary_below_minimum({"salary_max": 2000, "salary_currency": "USD", "salary_period": "month"}, p)

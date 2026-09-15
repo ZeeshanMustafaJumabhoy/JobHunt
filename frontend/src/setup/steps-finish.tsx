@@ -320,6 +320,7 @@ export function ReviewStep({ goTo, onFinish }: { goTo: (id: string) => void; onF
     { label: 'Countries', value: p.target_countries.length ? p.target_countries.map(nameOf).join(', ') : 'Anywhere', step: 'places' },
     { label: 'Visa', value: p.needs_visa ? 'Needs sponsorship' : 'No sponsorship needed', step: 'visa' },
     { label: 'Experience asked', value: `Up to ${p.max_years_required ?? 'any'} years`, step: 'experience' },
+    { label: 'Match threshold', value: `${p.min_match_score}% or higher`, step: 'match' },
     {
       label: 'Salary',
       value: p.salary.minimum ? `${p.salary.minimum.toLocaleString()} ${p.salary.currency} a ${p.salary.period}` : 'Not set',

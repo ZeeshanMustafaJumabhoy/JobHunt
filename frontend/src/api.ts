@@ -28,6 +28,7 @@ export interface Profile {
   exclude_title_words: string[]
   dealbreakers: string
   max_age_days: number
+  min_match_score: number
   sources: {
     remote_boards: boolean
     career_pages: boolean
@@ -124,7 +125,24 @@ export interface Job {
   salary_below_minimum: boolean
   matched_skills: string[]
   missing_skills: string[]
+  resume_tips: string[]
   status: JobStatus
+}
+
+export type AtsStatus = 'good' | 'warning' | 'bad'
+
+export interface AtsCheck {
+  category: string
+  status: AtsStatus
+  note: string
+}
+
+export interface AtsScan {
+  scanned_at: string
+  score: number
+  summary: string
+  checks: AtsCheck[]
+  suggestions: string[]
 }
 
 export interface Reference {
@@ -168,6 +186,8 @@ export const api = {
   saveKey: (name: string, body: Record<string, string>) =>
     request<{ ok: boolean; message: string; keys: Record<string, KeyStatus> }>('POST', `/api/keys/${name}`, body),
   deleteKey: (name: string) => request<{ keys: Record<string, KeyStatus> }>('DELETE', `/api/keys/${name}`),
+  getResumeScan: () => request<{ scan: AtsScan | null }>('GET', '/api/resume/scan'),
+  scanResume: () => request<{ scan: AtsScan }>('POST', '/api/resume/scan'),
   uploadResume: (file: File) => {
     const form = new FormData()
     form.append('file', file)

@@ -1,4 +1,4 @@
-import { Bookmark, Building2, Check, ChevronDown, Clock, ExternalLink, EyeOff, MapPin, RotateCcw, Wallet } from 'lucide-react'
+import { Bookmark, Building2, Check, ChevronDown, Clock, ExternalLink, EyeOff, Lightbulb, MapPin, RotateCcw, Wallet } from 'lucide-react'
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
 import { useState } from 'react'
 import type { Job, JobStatus } from '../api'
@@ -194,6 +194,19 @@ export function JobRow({ job, onStatus }: { job: Job; onStatus: (status: JobStat
                     <p className="mb-1 text-xs font-medium text-muted">Found on</p>
                     <p className="text-sm font-medium">{job.source}</p>
                   </div>
+                  {job.resume_tips.length > 0 && (
+                    <div className="rounded-lg border border-warning/25 bg-warning-soft/60 p-3 sm:col-span-2">
+                      <p className="mb-1.5 flex items-center gap-1.5 text-xs font-medium text-warning">
+                        <Lightbulb aria-hidden className="size-3.5" />
+                        Improve your resume for this job
+                      </p>
+                      <ul className="space-y-1 text-sm leading-relaxed text-ink/85">
+                        {job.resume_tips.map((t) => (
+                          <li key={t}>{t}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
                   {job.description && (
                     <p className="text-sm leading-relaxed text-muted sm:col-span-2">{job.description.slice(0, 600)}…</p>
                   )}

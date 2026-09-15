@@ -11,7 +11,7 @@ import re
 import threading
 import time
 from contextlib import asynccontextmanager
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Literal
 
 from fastapi import FastAPI, File, HTTPException, Request, UploadFile
@@ -19,7 +19,7 @@ from fastapi.concurrency import run_in_threadpool
 from fastapi.responses import FileResponse, JSONResponse
 from pydantic import BaseModel, Field, ValidationError
 
-from . import countries, envfile, keys, llm, notify, pipeline, profile, resume, sources, store
+from . import ats, countries, envfile, keys, llm, notify, pipeline, profile, resume, sources, store
 from .paths import frontend_dist
 
 runner = pipeline.Runner()
@@ -77,7 +77,7 @@ def get_state():
         "profile": _public_profile(p),
         "run": runner.state.public(),
         "last_run": store.last_run(),
-        "counts": store.counts(),
+        "counts": store.counts(p.min_match_score),
     }
 
 
@@ -183,6 +183,39 @@ async def upload_resume(file: UploadFile = File(...)):
         "max_years_required": current.max_years_required or profile.default_max_years(years),
     }
     return _public_profile(profile.update(changes))
+
+
+ATS_SCAN_COOLDOWN = 600  # 10 minutes: enough time for an edit to actually matter
+
+
+@app.get("/api/resume/scan")
+def get_resume_scan():
+    return {"scan": store.get_ats_scan()}
+
+
+@app.post("/api/resume/scan")
+async def run_resume_scan():
+    p = profile.load()
+    if not p.resume_text:
+        _bad("Add your resume first.")
+    providers = llm.build_providers()
+    if not providers:
+        _bad("Add your Groq API key first.")
+    existing = store.get_ats_scan()
+    if existing:
+        elapsed = (datetime.now(UTC) - datetime.fromisoformat(existing["scanned_at"])).total_seconds()
+        if elapsed < ATS_SCAN_COOLDOWN:
+            wait_min = max(1, int((ATS_SCAN_COOLDOWN - elapsed) // 60) + 1)
+            return JSONResponse(
+                {"detail": f"You can rescan in about {wait_min} minute{'s' if wait_min != 1 else ''}. "
+                            "Update your resume first — rescanning right away won't show anything new."},
+                status_code=429,
+            )
+    try:
+        result = await run_in_threadpool(ats.scan_resume, p, providers)
+    except llm.LLMError as e:
+        _bad(str(e), 502)
+    return {"scan": store.save_ats_scan(result)}
 
 
 class TitlesBody(BaseModel):
@@ -307,7 +340,7 @@ def get_runs():
 
 @app.post("/api/digest/test")
 def test_digest():
-    jobs = store.list_jobs(min_score=50, limit=10)
+    jobs = store.list_jobs(min_score=profile.load().min_match_score, limit=10)
     try:
         notify.send_digest(jobs)
     except Exception as e:

@@ -314,6 +314,47 @@ export function ExperienceStep() {
   )
 }
 
+function matchTone(pct: number): string {
+  return pct >= 70 ? 'var(--color-success)' : pct >= 55 ? 'var(--color-brand)' : 'var(--color-warning)'
+}
+
+export function MatchStep() {
+  const { state, setProfile } = useFlow()
+  const [min, setMin] = useState(state.profile.min_match_score)
+  const pct = ((min - 40) / 50) * 100
+  return (
+    <StepShell
+      title="How close of a match do you want?"
+      lede="The AI scores every posting from 0 to 100 against your resume, titles and experience. Jobs scoring below this are filed away instead of shown. Lower it to see more possibilities, raise it to see only your strongest matches."
+      onSubmit={async () => setProfile(await api.patchProfile({ min_match_score: min }))}
+    >
+      <div className="max-w-lg rounded-2xl border border-line bg-subtle/50 p-6">
+        <label htmlFor="min-match" className="block text-sm font-medium text-muted">
+          Only show jobs that match at least
+        </label>
+        <p className="mt-2 text-5xl font-semibold tracking-tight tabular-nums" aria-live="polite" style={{ color: matchTone(min) }}>
+          {min}<span className="text-xl font-medium text-muted">%</span>
+        </p>
+        <input
+          id="min-match"
+          type="range"
+          min={40}
+          max={90}
+          step={5}
+          value={min}
+          onChange={(e) => setMin(Number(e.target.value))}
+          className="mt-6 h-2 w-full cursor-pointer appearance-none rounded-full accent-(--color-brand)"
+          style={{ background: `linear-gradient(90deg, var(--color-brand) ${pct}%, var(--color-line) ${pct}%)` }}
+        />
+        <div className="mt-2 flex justify-between text-xs text-faint">
+          <span>40%, cast a wide net</span>
+          <span>90%, only near-perfect fits</span>
+        </div>
+      </div>
+    </StepShell>
+  )
+}
+
 const CURRENCIES = ['USD', 'EUR', 'GBP', 'AED', 'SAR', 'QAR', 'PKR', 'INR', 'CAD', 'AUD', 'SGD', 'CHF', 'PLN']
 
 export function SalaryStep() {

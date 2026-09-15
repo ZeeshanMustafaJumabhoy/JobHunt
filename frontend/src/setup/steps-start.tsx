@@ -1,4 +1,4 @@
-import { Briefcase, FileText, Lock, Mail, Plus, Radar, ShieldCheck, Sparkles, Upload } from 'lucide-react'
+import { Briefcase, FileText, HandHeart, Lock, Mail, Plus, Radar, ShieldCheck, Sparkles, Upload } from 'lucide-react'
 import { useRef, useState, type DragEvent } from 'react'
 import { api, ApiError } from '../api'
 import { TagInput } from '../ui/TagInput'
@@ -13,17 +13,46 @@ const FEATURES = [
   { icon: Mail, title: 'Sends the short list', text: 'Only the jobs worth applying to, ranked, in your inbox.' },
 ]
 
+/** Two ayat and two proverbs about hardship and getting back up, shown once,
+ * up top, before anything else — this app exists because of layoffs. */
+const MOTIVATION: { arabic?: string; text: string; ref: string }[] = [
+  { arabic: 'فَإِنَّ مَعَ الْعُسْرِ يُسْرًا', text: 'So indeed, with hardship comes ease.', ref: 'Qur’an 94:5, Ash-Sharh' },
+  {
+    arabic: 'وَمَن يَتَوَكَّلْ عَلَى اللَّهِ فَهُوَ حَسْبُهُ',
+    text: 'And whoever puts their trust in Allah — He is sufficient for them.',
+    ref: 'Qur’an 65:3, At-Talaq',
+  },
+  { text: 'Fall seven times, stand up eight.', ref: 'Japanese proverb' },
+  { text: 'This too shall pass.', ref: 'Persian proverb' },
+]
+
 export function WelcomeStep() {
   return (
     <div>
-      <div className="mx-auto max-w-3xl text-center">
-        <Badge tone="brand" icon={ShieldCheck}>
-          Runs on your computer. Your data stays with you.
-        </Badge>
-        <StepShellHero />
+      <div className="hero-panel px-5 py-10 sm:px-10 sm:py-14">
+        <div className="mx-auto max-w-3xl text-center">
+          <img src="/logo.png" alt="" className="mx-auto size-14 rounded-2xl shadow-pop sm:size-16" />
+          <div className="mt-6">
+            <Badge tone="brand" icon={ShieldCheck}>
+              Runs on your computer. Your data stays with you.
+            </Badge>
+          </div>
+
+          <ul className="mx-auto mt-8 grid gap-3 text-left sm:grid-cols-2">
+            {MOTIVATION.map((m) => (
+              <li key={m.ref} className="hero-quote">
+                {m.arabic && <p dir="rtl" lang="ar" className="text-right text-xl leading-relaxed">{m.arabic}</p>}
+                <p className={`text-[0.9375rem] leading-relaxed text-muted ${m.arabic ? 'mt-2' : ''}`}>{m.text}</p>
+                <p className="mt-2 text-xs font-medium text-brand-2">{m.ref}</p>
+              </li>
+            ))}
+          </ul>
+
+          <StepShellHero />
+        </div>
       </div>
 
-      <ul className="mt-14 grid gap-4 sm:grid-cols-3">
+      <ul className="mt-10 grid gap-4 sm:grid-cols-3">
         {FEATURES.map((f) => (
           <li key={f.title} className="card p-5 transition-shadow duration-200 hover:shadow-raised">
             <IconTile icon={f.icon} />
@@ -54,6 +83,18 @@ export function WelcomeStep() {
           </div>
         </div>
       </div>
+
+      <div className="card mt-4 flex gap-4 border-brand/20 bg-brand-soft/40 p-6">
+        <IconTile icon={HandHeart} />
+        <div>
+          <h2 className="font-semibold tracking-tight">One honest note</h2>
+          <p className="mt-1 text-sm leading-relaxed text-muted">
+            Shortlist finds and ranks the jobs most worth your time — it doesn't apply for you. Getting the offer still
+            means staying engaged with recruiters and hiring managers, following up, and showing up well in every
+            conversation. Best of luck out there.
+          </p>
+        </div>
+      </div>
     </div>
   )
 }
@@ -73,7 +114,7 @@ function StepShellHero() {
         </p>
       }
       showBack={false}
-      submitLabel="Start setup"
+      submitLabel="Let's start"
       heroLayout
     />
   )

@@ -37,13 +37,30 @@ CREATE TABLE IF NOT EXISTS jobs (
     salary TEXT NOT NULL DEFAULT '{}', salary_below_minimum INTEGER NOT NULL DEFAULT 0,
     matched_skills TEXT NOT NULL DEFAULT '[]', missing_skills TEXT NOT NULL DEFAULT '[]',
     scored_by TEXT,
-    status TEXT NOT NULL DEFAULT 'new'
+    status TEXT NOT NULL DEFAULT 'new',
+    resume_tips TEXT NOT NULL DEFAULT '[]'
 );
 CREATE INDEX IF NOT EXISTS jobs_run ON jobs(run_id);
 CREATE INDEX IF NOT EXISTS jobs_score ON jobs(score DESC);
+CREATE TABLE IF NOT EXISTS ats_scan (
+    id INTEGER PRIMARY KEY CHECK (id = 1),
+    scanned_at TEXT NOT NULL,
+    score INTEGER NOT NULL,
+    summary TEXT NOT NULL DEFAULT '',
+    checks TEXT NOT NULL DEFAULT '[]',
+    suggestions TEXT NOT NULL DEFAULT '[]'
+);
 """
 
 STATUSES = ("new", "saved", "applied", "hidden")
+
+
+def _migrate(conn: sqlite3.Connection) -> None:
+    """Add columns introduced after a user's database already existed.
+    CREATE TABLE IF NOT EXISTS only helps for brand-new tables."""
+    cols = {row[1] for row in conn.execute("PRAGMA table_info(jobs)")}
+    if "resume_tips" not in cols:
+        conn.execute("ALTER TABLE jobs ADD COLUMN resume_tips TEXT NOT NULL DEFAULT '[]'")
 
 
 def now_iso() -> str:
@@ -56,6 +73,7 @@ def connect():
     conn.row_factory = sqlite3.Row
     try:
         conn.executescript(SCHEMA)
+        _migrate(conn)
         yield conn
         conn.commit()
     finally:
@@ -86,8 +104,8 @@ def save_job(run_id: int, job: dict) -> None:
             """INSERT OR IGNORE INTO jobs (id, run_id, found_at, source, title, company, location,
                url, description, age_days, direct, bucket, bucket_label, score, tier, reason,
                visa_sponsorship, remote_type, years_required, salary, salary_below_minimum,
-               matched_skills, missing_skills, scored_by)
-               VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+               matched_skills, missing_skills, scored_by, resume_tips)
+               VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
             (job["id"], run_id, now_iso(), job.get("source"), job.get("title"), job.get("company"),
              job.get("location"), job.get("url"), job.get("description"), job.get("age_days"),
              int(bool(job.get("direct"))), job.get("bucket"), job.get("bucket_label"),
@@ -95,14 +113,14 @@ def save_job(run_id: int, job: dict) -> None:
              job.get("remote_type"), job.get("years_required"), json.dumps(salary),
              int(bool(job.get("salary_below_minimum"))),
              json.dumps(job.get("matched_skills") or []), json.dumps(job.get("missing_skills") or []),
-             job.get("scored_by")))
+             job.get("scored_by"), json.dumps(job.get("resume_tips") or [])))
 
 
 def _job_row(row: sqlite3.Row) -> dict:
     d = dict(row)
     d["direct"] = bool(d["direct"])
     d["salary_below_minimum"] = bool(d["salary_below_minimum"])
-    for key in ("salary", "matched_skills", "missing_skills"):
+    for key in ("salary", "matched_skills", "missing_skills", "resume_tips"):
         d[key] = json.loads(d[key] or ("{}" if key == "salary" else "[]"))
     return d
 
@@ -158,9 +176,9 @@ def mark_interrupted_runs() -> None:
         conn.execute("UPDATE runs SET status='interrupted', finished_at=? WHERE status='running'", (now_iso(),))
 
 
-def counts() -> dict:
+def counts(min_score: int = 50) -> dict:
     with connect() as conn:
-        rows = conn.execute("SELECT status, COUNT(*) FROM jobs WHERE score >= 50 GROUP BY status").fetchall()
+        rows = conn.execute("SELECT status, COUNT(*) FROM jobs WHERE score >= ? GROUP BY status", (min_score,)).fetchall()
     return {status: n for status, n in rows}
 
 
@@ -168,3 +186,28 @@ def forget_all() -> None:
     with _LOCK, connect() as conn:
         conn.execute("DELETE FROM jobs")
         conn.execute("DELETE FROM runs")
+
+
+def save_ats_scan(result: dict) -> dict:
+    scanned_at = now_iso()
+    with _LOCK, connect() as conn:
+        conn.execute(
+            """INSERT INTO ats_scan (id, scanned_at, score, summary, checks, suggestions)
+               VALUES (1, ?, ?, ?, ?, ?)
+               ON CONFLICT(id) DO UPDATE SET
+                 scanned_at=excluded.scanned_at, score=excluded.score, summary=excluded.summary,
+                 checks=excluded.checks, suggestions=excluded.suggestions""",
+            (scanned_at, result["score"], result["summary"],
+             json.dumps(result["checks"]), json.dumps(result["suggestions"])))
+    return get_ats_scan()
+
+
+def get_ats_scan() -> dict | None:
+    with connect() as conn:
+        row = conn.execute("SELECT * FROM ats_scan WHERE id = 1").fetchone()
+    if not row:
+        return None
+    d = dict(row)
+    d["checks"] = json.loads(d["checks"] or "[]")
+    d["suggestions"] = json.loads(d["suggestions"] or "[]")
+    return d

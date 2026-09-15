@@ -319,6 +319,9 @@ Think through:
    only if it requires existing work authorisation; otherwise "unclear".
 6. SALARY: copy any salary the posting states. Don't guess one.
 7. DEALBREAKERS: if the posting hits one, score it under 25.
+8. RESUME FIT: what, specifically, would make the candidate's resume read as a better
+   match for THIS posting? Think like an ATS scan: missing keywords the posting uses,
+   a skill the candidate has but didn't list, or a bullet that needs a number.
 
 Scoring guide:
   85-100 right role, strong skill overlap, right level, and reachable
@@ -335,7 +338,8 @@ Return ONLY a JSON object. "reason" is ONE plain sentence of at most 20 words.
   "salary_min": <int or null>, "salary_max": <int or null>,
   "salary_currency": "<ISO code or empty>", "salary_period": "hour|month|year|",
   "matched_skills": ["candidate skills this job asks for, spelled as in the candidate's list"],
-  "missing_skills": ["up to 5 things the job wants that the candidate lacks"]}}"""
+  "missing_skills": ["up to 5 things the job wants that the candidate lacks"],
+  "resume_tips": ["up to 3 concrete edits to the resume that would help for THIS job, one sentence each"]}}"""
 
 
 def parse_verdict(data: dict, profile: Profile) -> dict:
@@ -359,6 +363,7 @@ def parse_verdict(data: dict, profile: Profile) -> dict:
         "salary_period": period if period in ("hour", "month", "year") else "",
         "matched_skills": matched,
         "missing_skills": missing,
+        "resume_tips": _str_list(data.get("resume_tips"), 3, item_len=200),
     }
 
 

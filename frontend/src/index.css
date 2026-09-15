@@ -23,11 +23,11 @@
   --color-line: #e3e7ef;
   --color-line-strong: #cfd5e1;
 
-  --color-brand: #4f46e5;
-  --color-brand-hover: #4338ca;
-  --color-brand-soft: #eef0ff;
-  --color-brand-ink: #3730a3;
-  --color-brand-2: #3b82f6;
+  --color-brand: #2563eb;
+  --color-brand-hover: #1d4ed8;
+  --color-brand-soft: #e8f0ff;
+  --color-brand-ink: #1e40af;
+  --color-brand-2: #10b981;
 
   --color-success: #047857;
   --color-success-soft: #ecfdf5;
@@ -54,11 +54,11 @@
     --color-faint: #717a8c;
     --color-line: #242a38;
     --color-line-strong: #323a4b;
-    --color-brand: #818cf8;
-    --color-brand-hover: #a5b4fc;
-    --color-brand-soft: #1e1b4b;
-    --color-brand-ink: #c7d2fe;
-    --color-brand-2: #60a5fa;
+    --color-brand: #5b8def;
+    --color-brand-hover: #7ea6f2;
+    --color-brand-soft: #142149;
+    --color-brand-ink: #cddcfb;
+    --color-brand-2: #34d399;
     --color-success: #34d399;
     --color-success-soft: #052e22;
     --color-warning: #fbbf24;
@@ -127,6 +127,36 @@
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
+  }
+
+  /* The dark, rich hero panel on the setup welcome screen: local token overrides
+     so every ordinary component (Badge, Button, text-muted, …) re-themes for
+     free just by living inside it. */
+  .hero-panel {
+    --color-ink: #f4f6fc;
+    --color-muted: #c3cbdd;
+    --color-faint: #9aa4bd;
+    --color-line: rgb(255 255 255 / 0.14);
+    --color-line-strong: rgb(255 255 255 / 0.22);
+    --color-brand-soft: rgb(255 255 255 / 0.12);
+    --color-brand-ink: #eaf1ff;
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+    border-radius: 1.75rem;
+    color: var(--color-ink);
+    background:
+      radial-gradient(46rem 30rem at 12% -12%, color-mix(in srgb, var(--color-brand-2) 38%, transparent), transparent 62%),
+      radial-gradient(42rem 28rem at 100% 0%, color-mix(in srgb, var(--color-brand) 45%, transparent), transparent 60%),
+      linear-gradient(165deg, #060a15 0%, #0a1730 52%, #0d2038 100%);
+    box-shadow: var(--shadow-pop);
+  }
+
+  .hero-quote {
+    border-radius: 1rem;
+    border: 1px solid var(--color-line);
+    background: rgb(255 255 255 / 0.05);
+    padding: 1.1rem 1.25rem;
   }
 }
 

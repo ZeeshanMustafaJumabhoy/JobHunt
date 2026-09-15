@@ -54,14 +54,15 @@ export function Dashboard({ state, onState }: { state: AppState; onState: (s: Ap
   const stateRef = useRef(state)
   stateRef.current = state
 
+  const minScore = state.profile.min_match_score
   const loadJobs = useCallback(async () => {
     try {
-      setJobs((await api.jobs({ status: view })).jobs)
+      setJobs((await api.jobs({ status: view, minScore })).jobs)
       setError('')
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'Loading jobs failed.')
     }
-  }, [view])
+  }, [view, minScore])
 
   useEffect(() => {
     setJobs(null)
