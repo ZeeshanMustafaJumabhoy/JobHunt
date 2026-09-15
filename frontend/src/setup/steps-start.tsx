@@ -6,7 +6,12 @@ import { Badge, Button, Chip, ExternalLink, Field, IconTile, Marked, Notice, Spi
 import { useFlow } from './flow'
 import { COMMON_JOB_TITLES } from './jobTitles'
 import { KeyForm } from './KeyForm'
+import { isPreviewMode } from './preview'
 import { StepShell } from './StepShell'
+
+/** Preview mode has no real resume to read, so it has nothing to suggest here
+ * on its own — these stand in so the "suggested" UI is still visible to check. */
+const PREVIEW_SUGGESTED_TITLES = ['QA Engineer', 'SDET', 'Test Automation Engineer', 'QA Lead', 'Software Tester']
 
 const FEATURES = [
   { icon: Radar, title: 'Searches everywhere', text: 'Job boards, Google for Jobs and company career pages, every day.' },
@@ -332,7 +337,7 @@ export function ResumeStep() {
 export function TitlesStep() {
   const { state, setProfile } = useFlow()
   const p = state.profile
-  const suggested = p.suggested_titles
+  const suggested = p.suggested_titles.length > 0 ? p.suggested_titles : isPreviewMode() ? PREVIEW_SUGGESTED_TITLES : []
   const [selected, setSelected] = useState<string[]>(p.titles.length ? p.titles : suggested.slice(0, 3))
   const [custom, setCustom] = useState('')
 

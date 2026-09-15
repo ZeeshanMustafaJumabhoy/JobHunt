@@ -343,6 +343,7 @@ export function ReviewStep({ goTo, onFinish }: { goTo: (id: string) => void; onF
       submitLabel="Run my first search"
       canSubmit={sourceCount > 0}
       onSubmit={onFinish}
+      alwaysSubmit
     >
       <dl className="max-w-2xl divide-y divide-line overflow-hidden rounded-2xl border border-line">
         {rows.map((r) => (

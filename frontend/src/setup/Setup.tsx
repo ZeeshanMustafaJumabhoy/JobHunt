@@ -2,8 +2,9 @@ import { Check } from 'lucide-react'
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { api, type AppState, type KeyStatus, type Profile, type Reference } from '../api'
-import { Logo, ThemeToggle } from '../ui/ui'
+import { Badge, Logo, ThemeToggle } from '../ui/ui'
 import { FlowProvider } from './flow'
+import { isPreviewMode } from './preview'
 import { EmailStep, ReviewStep, SourcesStep } from './steps-finish'
 import {
   ExclusionsStep,
@@ -49,6 +50,7 @@ const GROUP_HINT: Record<string, string> = {
 
 /** The furthest step reachable with the answers given so far. */
 function furthestStep(state: AppState): number {
+  if (isPreviewMode()) return STEPS.length - 1
   const at = (id: StepId) => STEPS.findIndex((s) => s.id === id)
   if (!state.keys.GROQ_API_KEY?.set) return at('ai')
   if (!state.profile.has_resume) return at('resume')
@@ -84,7 +86,8 @@ export function Setup({
     setDirection(clamped >= index ? 1 : -1)
     setIndex(clamped)
     // Remember the step so closing the tab resumes here. Failure is harmless.
-    api.patchProfile({ setup_step: STEPS[clamped].id }).catch(() => {})
+    // Skipped in preview mode: browsing around shouldn't overwrite real progress.
+    if (!isPreviewMode()) api.patchProfile({ setup_step: STEPS[clamped].id }).catch(() => {})
   }
 
   useEffect(() => {
@@ -103,6 +106,12 @@ export function Setup({
   }
 
   async function finish() {
+    // Preview mode never had a real key or resume to run a real search with —
+    // just hand off to the dashboard, which shows stand-in jobs of its own.
+    if (isPreviewMode()) {
+      onDone()
+      return
+    }
     const profile = await api.patchProfile({ setup_complete: true, setup_step: 'review' })
     onState({ ...latest.current, profile })
     await api.startRun()
@@ -136,6 +145,7 @@ export function Setup({
   // individual question inside "Preferences" — those get their own sub-count.
   const groupNumber = GROUPS.indexOf(currentGroup) + 1
   const isWelcome = index === 0
+  const preview = isPreviewMode()
 
   const content = (
     <AnimatePresence mode="wait" initial={false} custom={direction}>
@@ -161,6 +171,7 @@ export function Setup({
           <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-5 sm:px-8">
             <Logo />
             <div className="flex items-center gap-3">
+              {preview && <Badge tone="warning">Preview — nothing is saved</Badge>}
               {!isWelcome && (
                 <span className="text-sm text-muted tabular-nums">
                   Step {groupNumber} of {GROUPS.length}
