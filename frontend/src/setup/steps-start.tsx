@@ -4,6 +4,7 @@ import { api, ApiError } from '../api'
 import { TagInput } from '../ui/TagInput'
 import { Badge, Button, Chip, ExternalLink, Field, IconTile, Marked, Notice, Spinner } from '../ui/ui'
 import { useFlow } from './flow'
+import { COMMON_JOB_TITLES } from './jobTitles'
 import { KeyForm } from './KeyForm'
 import { StepShell } from './StepShell'
 
@@ -331,18 +332,24 @@ export function ResumeStep() {
 export function TitlesStep() {
   const { state, setProfile } = useFlow()
   const p = state.profile
-  const [selected, setSelected] = useState<string[]>(p.titles.length ? p.titles : p.suggested_titles.slice(0, 3))
+  const suggested = p.suggested_titles
+  const [selected, setSelected] = useState<string[]>(p.titles.length ? p.titles : suggested.slice(0, 3))
   const [custom, setCustom] = useState('')
 
-  const options = [...p.suggested_titles, ...selected.filter((t) => !p.suggested_titles.includes(t))]
+  const options = [...suggested, ...selected.filter((t) => !suggested.includes(t))]
+  const titlePool = [...new Set([...suggested, ...COMMON_JOB_TITLES])]
+  const query = custom.trim().toLowerCase()
+  const matches = query
+    ? titlePool.filter((t) => t.toLowerCase().includes(query) && !selected.some((s) => s.toLowerCase() === t.toLowerCase())).slice(0, 6)
+    : []
 
   function toggle(t: string) {
     setSelected((cur) => (cur.includes(t) ? cur.filter((x) => x !== t) : [...cur, t]))
   }
 
-  function addCustom() {
-    const t = custom.trim()
-    if (t && !selected.some((s) => s.toLowerCase() === t.toLowerCase())) setSelected((cur) => [...cur, t])
+  function addTitle(t: string) {
+    const trimmed = t.trim()
+    if (trimmed && !selected.some((s) => s.toLowerCase() === trimmed.toLowerCase())) setSelected((cur) => [...cur, trimmed])
     setCustom('')
   }
 
@@ -354,7 +361,7 @@ export function TitlesStep() {
       onSubmit={async () => setProfile(await api.saveTitles(selected.slice(0, 15)))}
     >
       <div className="max-w-2xl">
-        {p.suggested_titles.length > 0 && (
+        {suggested.length > 0 && (
           <p className="mb-3 flex items-center gap-2 text-sm font-medium">
             <Sparkles aria-hidden className="size-4 text-brand" />
             Suggested from your resume
@@ -368,21 +375,37 @@ export function TitlesStep() {
           ))}
         </div>
         <div className="mt-8 flex max-w-lg items-end gap-2">
-          <Field
-            label="Add a title"
-            className="flex-1"
-            placeholder="e.g. Product Analyst"
-            value={custom}
-            maxLength={80}
-            onChange={(e) => setCustom(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') {
-                e.preventDefault()
-                addCustom()
-              }
-            }}
-          />
-          <Button variant="secondary" icon={Plus} onClick={addCustom} disabled={!custom.trim()}>
+          <div className="relative flex-1">
+            <Field
+              label="Add a title"
+              placeholder="e.g. Product Analyst"
+              value={custom}
+              maxLength={80}
+              onChange={(e) => setCustom(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault()
+                  addTitle(custom)
+                }
+              }}
+            />
+            {matches.length > 0 && (
+              <ul className="absolute z-10 mt-2 w-full overflow-hidden rounded-xl border border-line bg-surface p-1 shadow-pop">
+                {matches.map((t) => (
+                  <li key={t}>
+                    <button
+                      type="button"
+                      onClick={() => addTitle(t)}
+                      className="flex w-full items-center rounded-lg px-3 py-2.5 text-left text-[0.9375rem] hover:bg-subtle"
+                    >
+                      {t}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+          <Button variant="secondary" icon={Plus} onClick={() => addTitle(custom)} disabled={!custom.trim()}>
             Add
           </Button>
         </div>
