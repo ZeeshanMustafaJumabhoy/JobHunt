@@ -44,8 +44,18 @@
   --ease-out-quart: cubic-bezier(0.25, 1, 0.5, 1);
 }
 
+:root {
+  color-scheme: light;
+}
+
+/* Dark mode applies from the OS preference by default, or from the explicit
+   choice made with the day/night toggle (a `data-theme` attribute on <html>,
+   set before first paint by the inline script in index.html so there's no
+   flash). An explicit choice always wins over the OS preference either way. */
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme='light']) {
+    color-scheme: dark;
+    background-image: none;
     --color-canvas: #0b0e14;
     --color-surface: #131722;
     --color-subtle: #1a1f2c;
@@ -72,9 +82,42 @@
   }
 }
 
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  background-image: none;
+  --color-canvas: #0b0e14;
+  --color-surface: #131722;
+  --color-subtle: #1a1f2c;
+  --color-ink: #e8ebf2;
+  --color-muted: #a1a9b8;
+  --color-faint: #717a8c;
+  --color-line: #242a38;
+  --color-line-strong: #323a4b;
+  --color-brand: #5b8def;
+  --color-brand-hover: #7ea6f2;
+  --color-brand-soft: #142149;
+  --color-brand-ink: #cddcfb;
+  --color-brand-2: #34d399;
+  --color-success: #34d399;
+  --color-success-soft: #052e22;
+  --color-warning: #fbbf24;
+  --color-warning-soft: #2d2206;
+  --color-danger: #f87171;
+  --color-danger-soft: #2d0f12;
+  --shadow-card: 0 0 0 1px rgb(255 255 255 / 0.02);
+  --shadow-raised: 0 8px 20px -6px rgb(0 0 0 / 0.5);
+  --shadow-pop: 0 20px 48px -12px rgb(0 0 0 / 0.6);
+  --shadow-brand: inset 0 1px 0 rgb(255 255 255 / 0.12);
+}
+
 @layer base {
   html {
-    background: var(--color-canvas);
+    background-color: var(--color-canvas);
+    background-image: url('/background.jpg');
+    background-size: cover;
+    background-position: top center;
+    background-attachment: fixed;
+    background-repeat: no-repeat;
     color: var(--color-ink);
     font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;

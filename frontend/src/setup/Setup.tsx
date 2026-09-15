@@ -2,7 +2,7 @@ import { Check } from 'lucide-react'
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { api, type AppState, type KeyStatus, type Profile, type Reference } from '../api'
-import { Logo } from '../ui/ui'
+import { Logo, ThemeToggle } from '../ui/ui'
 import { FlowProvider } from './flow'
 import { EmailStep, ReviewStep, SourcesStep } from './steps-finish'
 import {
@@ -160,11 +160,14 @@ export function Setup({
         <header className="sticky top-0 z-20 border-b border-line/70 bg-canvas/80 backdrop-blur-md">
           <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-5 sm:px-8">
             <Logo />
-            {!isWelcome && (
-              <span className="text-sm text-muted tabular-nums">
-                Step {groupNumber} of {GROUPS.length}
-              </span>
-            )}
+            <div className="flex items-center gap-3">
+              {!isWelcome && (
+                <span className="text-sm text-muted tabular-nums">
+                  Step {groupNumber} of {GROUPS.length}
+                </span>
+              )}
+              <ThemeToggle />
+            </div>
           </div>
           {!isWelcome && (
             <div
@@ -209,16 +212,17 @@ export function Setup({
                           disabled={!reachable}
                           onClick={() => go(groupStart)}
                           aria-current={current ? 'step' : undefined}
-                          className={`relative flex w-full items-center gap-3 rounded-xl px-2.5 py-2.5 text-left transition-colors duration-150 disabled:cursor-default ${
-                            current ? 'bg-brand-soft' : reachable ? 'hover:bg-subtle' : ''
+                          className={`relative flex w-full items-center gap-3 rounded-lg px-2.5 py-2.5 text-left transition-colors duration-150 disabled:cursor-default ${
+                            current ? 'bg-brand-soft/70' : reachable ? 'hover:bg-subtle' : ''
                           }`}
                         >
+                          {current && <span aria-hidden className="absolute inset-y-2 left-0 w-0.5 rounded-full bg-brand" />}
                           <span
                             className={`grid size-7 shrink-0 place-items-center rounded-full text-xs font-semibold tabular-nums transition-colors ${
                               done
                                 ? 'bg-brand text-white dark:text-canvas'
                                 : current
-                                  ? 'bg-surface text-brand ring-2 ring-brand'
+                                  ? 'bg-surface text-brand-ink ring-1 ring-brand/60'
                                   : 'bg-subtle text-faint'
                             }`}
                           >

@@ -1,6 +1,7 @@
-import { Check, CircleAlert, CircleCheck, LoaderCircle, X, type LucideIcon } from 'lucide-react'
+import { Check, CircleAlert, CircleCheck, LoaderCircle, Moon, Sun, X, type LucideIcon } from 'lucide-react'
 import { motion, useReducedMotion } from 'motion/react'
-import { useId, type ButtonHTMLAttributes, type InputHTMLAttributes, type ReactNode } from 'react'
+import { useId, useState, type ButtonHTMLAttributes, type InputHTMLAttributes, type ReactNode } from 'react'
+import { applyTheme, currentTheme } from './theme'
 
 type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger'
 type ButtonSize = 'md' | 'sm'
@@ -278,6 +279,28 @@ export function ScoreRing({ score, size = 56 }: { score: number; size?: number }
       </svg>
       <span className="absolute inset-0 grid place-items-center text-base font-semibold tabular-nums">{score}</span>
     </div>
+  )
+}
+
+/** Day/night toggle. Applies instantly and remembers the choice; without one,
+ * the app follows the OS preference (see the inline script in index.html). */
+export function ThemeToggle() {
+  const [theme, setTheme] = useState(currentTheme)
+  function toggle() {
+    const next = theme === 'dark' ? 'light' : 'dark'
+    applyTheme(next)
+    setTheme(next)
+  }
+  return (
+    <button
+      type="button"
+      onClick={toggle}
+      aria-label={theme === 'dark' ? 'Switch to day mode' : 'Switch to night mode'}
+      title={theme === 'dark' ? 'Day mode' : 'Night mode'}
+      className="grid size-9 shrink-0 place-items-center rounded-lg text-muted transition-colors duration-150 hover:bg-subtle hover:text-ink"
+    >
+      {theme === 'dark' ? <Sun aria-hidden className="size-4" /> : <Moon aria-hidden className="size-4" />}
+    </button>
   )
 }
 

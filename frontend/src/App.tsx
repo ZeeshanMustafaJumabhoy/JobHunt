@@ -5,7 +5,7 @@ import { Dashboard } from './jobs/Dashboard'
 import { AtsPortal } from './resume/AtsPortal'
 import { Settings } from './settings/Settings'
 import { Setup } from './setup/Setup'
-import { Button, Logo, Skeleton } from './ui/ui'
+import { Button, Logo, Skeleton, ThemeToggle } from './ui/ui'
 
 type Page = 'jobs' | 'resume' | 'settings'
 
@@ -109,6 +109,7 @@ export default function App() {
                 Settings
               </a>
             </nav>
+            <ThemeToggle />
             <span
               aria-hidden
               className="ml-1 hidden size-9 place-items-center rounded-full bg-gradient-to-br from-brand to-brand-2 text-sm font-semibold text-white sm:grid"
