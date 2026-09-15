@@ -1,20 +1,21 @@
+import { LayoutList, Settings as SettingsIcon, WifiOff } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
 import { api, ApiError, type AppState, type Reference } from './api'
 import { Dashboard } from './jobs/Dashboard'
 import { Settings } from './settings/Settings'
 import { Setup } from './setup/Setup'
-import { Button, Skeleton } from './ui/ui'
+import { Button, Logo, Skeleton } from './ui/ui'
 
 type Page = 'jobs' | 'settings'
 
-function navClass(active: boolean) {
-  return `inline-flex min-h-11 items-center border-b-2 transition-colors duration-150 ${
-    active ? 'border-ink text-ink' : 'border-transparent text-graphite hover:text-ink'
-  }`
-}
-
 function pageFromHash(): Page {
   return window.location.hash.startsWith('#/settings') ? 'settings' : 'jobs'
+}
+
+function navClass(active: boolean) {
+  return `inline-flex h-11 items-center gap-2 rounded-lg px-3 text-sm font-medium transition-colors duration-150 sm:h-9 ${
+    active ? 'bg-subtle text-ink' : 'text-muted hover:bg-subtle hover:text-ink'
+  }`
 }
 
 export default function App() {
@@ -43,11 +44,16 @@ export default function App() {
 
   if (error) {
     return (
-      <div className="mx-auto max-w-xl px-5 pt-28">
-        <h1 className="text-title font-semibold">Shortlist isn't responding</h1>
-        <p className="mt-4 text-graphite">{error}</p>
-        <div className="mt-8">
-          <Button onClick={() => void load()}>Try again</Button>
+      <div className="grid min-h-dvh place-items-center px-5">
+        <div className="card max-w-md p-8 text-center">
+          <span className="mx-auto grid size-14 place-items-center rounded-2xl bg-danger-soft text-danger">
+            <WifiOff aria-hidden className="size-7" />
+          </span>
+          <h1 className="mt-4 text-xl font-semibold tracking-tight">Shortlist isn't responding</h1>
+          <p className="mt-2 text-sm text-muted">{error}</p>
+          <Button className="mt-6" onClick={() => void load()}>
+            Try again
+          </Button>
         </div>
       </div>
     )
@@ -77,26 +83,35 @@ export default function App() {
     )
   }
 
+  const initial = (state.profile.name || 'Y').charAt(0).toUpperCase()
   return (
-    <div className="mx-auto max-w-5xl px-5 sm:px-8">
-      <header className="flex items-center justify-between py-6">
-        <a href="#/jobs" className="text-[1.05rem] font-semibold">
-          <span className="marker">Shortlist</span>
-        </a>
-        <nav aria-label="Main" className="flex gap-6 text-[0.95rem]">
-          <a href="#/jobs" aria-current={page === 'jobs' ? 'page' : undefined} className={navClass(page === 'jobs')}>
-            Jobs
+    <div className="min-h-dvh">
+      <header className="sticky top-0 z-20 border-b border-line/70 bg-canvas/80 backdrop-blur-md">
+        <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-5 sm:px-8">
+          <a href="#/jobs" aria-label="Shortlist home">
+            <Logo />
           </a>
-          <a
-            href="#/settings"
-            aria-current={page === 'settings' ? 'page' : undefined}
-            className={navClass(page === 'settings')}
-          >
-            Settings
-          </a>
-        </nav>
+          <div className="flex items-center gap-2">
+            <nav aria-label="Main" className="flex gap-1">
+              <a href="#/jobs" aria-current={page === 'jobs' ? 'page' : undefined} className={navClass(page === 'jobs')}>
+                <LayoutList aria-hidden className="size-4" />
+                Jobs
+              </a>
+              <a href="#/settings" aria-current={page === 'settings' ? 'page' : undefined} className={navClass(page === 'settings')}>
+                <SettingsIcon aria-hidden className="size-4" />
+                Settings
+              </a>
+            </nav>
+            <span
+              aria-hidden
+              className="ml-1 hidden size-9 place-items-center rounded-full bg-gradient-to-br from-brand to-brand-2 text-sm font-semibold text-white sm:grid"
+            >
+              {initial}
+            </span>
+          </div>
+        </div>
       </header>
-      <main className="pt-8 pb-24 sm:pt-12">
+      <main className="mx-auto max-w-6xl px-5 pt-8 pb-24 sm:px-8 sm:pt-10">
         {page === 'jobs' ? (
           <Dashboard state={state} onState={setState} />
         ) : (

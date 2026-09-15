@@ -1,21 +1,38 @@
+import {
+  Ban,
+  Building2,
+  CalendarDays,
+  Globe,
+  House,
+  Laptop,
+  MapPin,
+  Plane,
+  Search,
+  ShieldCheck,
+  Wallet,
+  type LucideIcon,
+} from 'lucide-react'
 import { useMemo, useState, type ReactNode } from 'react'
 import { api, type WorkMode } from '../api'
 import { TagInput } from '../ui/TagInput'
-import { Chip, Field, Toggle } from '../ui/ui'
+import { Chip, Field, IconTile, Toggle, selectClass } from '../ui/ui'
 import { useFlow } from './flow'
 import { StepShell } from './StepShell'
 
-function OptionRow({
+/** A large selectable card, used for single and multiple choice questions. */
+function OptionCard({
   selected,
   onSelect,
   title,
   description,
+  icon,
   multi = false,
 }: {
   selected: boolean
   onSelect: () => void
   title: string
   description: ReactNode
+  icon?: LucideIcon
   multi?: boolean
 }) {
   return (
@@ -24,30 +41,40 @@ function OptionRow({
       role={multi ? 'checkbox' : 'radio'}
       aria-checked={selected}
       onClick={onSelect}
-      className={`flex w-full items-start gap-4 border-b border-rule py-4 text-left transition-colors duration-150 first:border-t hover:bg-sheet ${
-        selected ? '' : 'text-graphite'
+      className={`flex w-full items-center gap-4 rounded-2xl border p-4 text-left transition-[border-color,background-color,box-shadow] duration-150 ${
+        selected
+          ? 'border-brand bg-brand-soft/60 shadow-[0_0_0_3px] shadow-brand/15'
+          : 'border-line bg-surface shadow-card hover:border-line-strong'
       }`}
     >
+      {icon && <IconTile icon={icon} tone={selected ? 'brand' : 'neutral'} />}
+      <span className="min-w-0 flex-1">
+        <span className="block font-medium text-ink">{title}</span>
+        <span className="mt-0.5 block text-sm text-muted">{description}</span>
+      </span>
       <span
         aria-hidden
-        className={`mt-1 grid size-4.5 shrink-0 place-items-center border transition-colors duration-150 ${
-          multi ? 'rounded-[4px]' : 'rounded-full'
-        } ${selected ? 'border-ink bg-ink' : 'border-faint'}`}
+        className={`grid size-5 shrink-0 place-items-center border-2 transition-colors duration-150 ${
+          multi ? 'rounded-md' : 'rounded-full'
+        } ${selected ? 'border-brand bg-brand' : 'border-line-strong bg-surface'}`}
       >
-        {selected && <span className={`bg-paper ${multi ? 'h-2 w-2 rounded-[1px]' : 'size-1.5 rounded-full'}`} />}
-      </span>
-      <span>
-        <span className={`block text-[1.05rem] ${selected ? 'font-medium text-ink' : ''}`}>{title}</span>
-        <span className="mt-0.5 block text-sm text-graphite">{description}</span>
+        {selected &&
+          (multi ? (
+            <svg viewBox="0 0 24 24" className="size-3.5 text-white" fill="none" stroke="currentColor" strokeWidth={3.5} strokeLinecap="round" strokeLinejoin="round">
+              <path d="M20 6 9 17l-5-5" />
+            </svg>
+          ) : (
+            <span className="size-2 rounded-full bg-white" />
+          ))}
       </span>
     </button>
   )
 }
 
-const MODES: { value: WorkMode; title: string; description: string }[] = [
-  { value: 'remote', title: 'Remote', description: 'Work from home. Worldwide remote roles need no visa.' },
-  { value: 'hybrid', title: 'Hybrid', description: 'Some days in an office, so you live near it.' },
-  { value: 'onsite', title: 'On-site', description: 'In the office every day.' },
+const MODES: { value: WorkMode; title: string; description: string; icon: LucideIcon }[] = [
+  { value: 'remote', title: 'Remote', description: 'Work from home. Worldwide remote roles need no visa.', icon: Laptop },
+  { value: 'hybrid', title: 'Hybrid', description: 'Some days in an office, so you live near it.', icon: House },
+  { value: 'onsite', title: 'On-site', description: 'In the office every day.', icon: Building2 },
 ]
 
 export function WorkModeStep() {
@@ -61,11 +88,12 @@ export function WorkModeStep() {
       canSubmit={modes.length > 0}
       onSubmit={async () => setProfile(await api.patchProfile({ work_modes: modes }))}
     >
-      <div className="max-w-xl" role="group" aria-label="Work arrangements">
+      <div className="grid max-w-xl grid-cols-1 gap-3" role="group" aria-label="Work arrangements">
         {MODES.map((m) => (
-          <OptionRow
+          <OptionCard
             key={m.value}
             multi
+            icon={m.icon}
             selected={modes.includes(m.value)}
             onSelect={() => toggle(m.value)}
             title={m.title}
@@ -109,32 +137,31 @@ export function PlacesStep() {
           : "Jobs in the countries you pick rank first. On-site jobs anywhere else are left out, unless they're remote."
       }
       canSubmit={Boolean(home)}
-      onSubmit={async () =>
-        setProfile(await api.patchProfile({ home_country: home, target_countries: targets, cities }))
-      }
+      onSubmit={async () => setProfile(await api.patchProfile({ home_country: home, target_countries: targets, cities }))}
     >
-      <div className="max-w-2xl space-y-10">
+      <div className="max-w-2xl space-y-8">
         <div className="max-w-sm">
           <label htmlFor="home-country" className="mb-1.5 block text-sm font-medium">
             The country you live in now
           </label>
-          <select
-            id="home-country"
-            value={home}
-            onChange={(e) => setHome(e.target.value)}
-            className="h-11 w-full rounded-md border border-rule bg-sheet px-3 text-[0.95rem] focus:border-pen focus:outline-none"
-          >
-            <option value="">Choose a country</option>
-            {countries.map((c) => (
-              <option key={c.code} value={c.code}>
-                {c.name}
-              </option>
-            ))}
-          </select>
+          <div className="relative">
+            <House aria-hidden className="pointer-events-none absolute top-1/2 left-3.5 size-4 -translate-y-1/2 text-faint" />
+            <select id="home-country" value={home} onChange={(e) => setHome(e.target.value)} className={`${selectClass} pl-10`}>
+              <option value="">Choose a country</option>
+              {countries.map((c) => (
+                <option key={c.code} value={c.code}>
+                  {c.name}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
 
-        <div>
-          <h2 className="text-sm font-medium">Countries you'd work in</h2>
+        <div className="rounded-2xl border border-line bg-subtle/50 p-5">
+          <h2 className="flex items-center gap-2 text-sm font-medium">
+            <Globe aria-hidden className="size-4 text-brand" />
+            Countries you'd work in
+          </h2>
           <div className="mt-3 flex flex-wrap gap-2">
             {Object.entries(reference?.groups ?? {}).map(([group, codes]) => (
               <Chip key={group} selected={codes.every((c) => targets.includes(c))} onToggle={() => toggleGroup(codes)}>
@@ -147,6 +174,7 @@ export function PlacesStep() {
             <Field
               label="Find a country"
               placeholder="Start typing"
+              icon={Search}
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               onKeyDown={(e) => {
@@ -160,7 +188,7 @@ export function PlacesStep() {
               }}
             />
             {matches.length > 0 && (
-              <ul className="absolute z-10 mt-1 w-full overflow-hidden rounded-md border border-rule bg-sheet shadow-[0_8px_24px_-12px_rgb(27_36_48/0.35)]">
+              <ul className="absolute z-10 mt-2 w-full overflow-hidden rounded-xl border border-line bg-surface p-1 shadow-pop">
                 {matches.map((c) => (
                   <li key={c.code}>
                     <button
@@ -169,10 +197,10 @@ export function PlacesStep() {
                         toggle(c.code)
                         setQuery('')
                       }}
-                      className="flex w-full justify-between px-3 py-2.5 text-left text-[0.95rem] hover:bg-paper"
+                      className="flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-left text-[0.9375rem] hover:bg-subtle"
                     >
                       {c.name}
-                      {targets.includes(c.code) && <span className="text-sm text-graphite">Selected</span>}
+                      {targets.includes(c.code) && <span className="text-xs font-medium text-brand">Selected</span>}
                     </button>
                   </li>
                 ))}
@@ -181,7 +209,7 @@ export function PlacesStep() {
           </div>
 
           {targets.length > 0 && (
-            <ul className="mt-5 flex flex-wrap gap-2" aria-label="Selected countries">
+            <ul className="mt-4 flex flex-wrap gap-2" aria-label="Selected countries">
               {targets.map((code) => (
                 <li key={code}>
                   <Chip selected removable label={`Remove ${nameOf(code)}`} onToggle={() => toggle(code)}>
@@ -215,25 +243,27 @@ export function VisaStep() {
   return (
     <StepShell
       title={`Do you need a visa to work outside ${home}?`}
-      lede="The AI checks each posting for sponsorship, and a job that can't sponsor you ranks lower instead of wasting an application."
+      lede="The AI checks each posting for sponsorship. A job that can't sponsor you ranks lower instead of costing you an application."
       onSubmit={async () => setProfile(await api.patchProfile({ needs_visa: needsVisa, willing_to_relocate: relocate }))}
     >
       <div className="max-w-xl">
-        <div role="radiogroup" aria-label="Visa sponsorship">
-          <OptionRow
+        <div role="radiogroup" aria-label="Visa sponsorship" className="grid gap-3">
+          <OptionCard
+            icon={Plane}
             selected={needsVisa}
             onSelect={() => setNeedsVisa(true)}
             title="Yes, I'd need sponsorship"
             description="Prefer employers that sponsor, and remote roles open worldwide."
           />
-          <OptionRow
+          <OptionCard
+            icon={ShieldCheck}
             selected={!needsVisa}
             onSelect={() => setNeedsVisa(false)}
             title="No, I can already work in my target countries"
             description="A citizenship, residence permit or existing visa covers it."
           />
         </div>
-        <div className="mt-8">
+        <div className="mt-6 rounded-2xl border border-line p-4">
           <Toggle checked={relocate} onChange={setRelocate} label="I'm willing to relocate for the right job" />
         </div>
       </div>
@@ -246,24 +276,24 @@ export function ExperienceStep() {
   const p = state.profile
   const [cap, setCap] = useState(p.max_years_required ?? Math.round((p.years_experience ?? 2) + 4))
   const yours = p.years_experience
+  const pct = ((cap - 1) / 24) * 100
   return (
     <StepShell
       title="How much of a stretch is fine?"
       lede={
         <>
           Postings often ask for more experience than they hire at.
-          {yours !== null && ` You have about ${yours} years.`} Jobs asking for more than this are skipped before the AI
-          reads them.
+          {yours !== null && ` You have about ${yours} years.`} Jobs asking for more than this are skipped before the AI reads them.
         </>
       }
       onSubmit={async () => setProfile(await api.patchProfile({ max_years_required: cap }))}
     >
-      <div className="max-w-md">
-        <label htmlFor="years-cap" className="block text-sm font-medium">
+      <div className="max-w-lg rounded-2xl border border-line bg-subtle/50 p-6">
+        <label htmlFor="years-cap" className="block text-sm font-medium text-muted">
           Skip jobs that ask for more than
         </label>
-        <p className="mt-3 text-display font-semibold tabular-nums" aria-live="polite">
-          {cap} <span className="text-title font-normal text-graphite">years</span>
+        <p className="mt-2 text-5xl font-semibold tracking-tight tabular-nums" aria-live="polite">
+          {cap} <span className="text-xl font-medium text-muted">years</span>
         </p>
         <input
           id="years-cap"
@@ -272,11 +302,12 @@ export function ExperienceStep() {
           max={25}
           value={cap}
           onChange={(e) => setCap(Number(e.target.value))}
-          className="mt-4 w-full accent-(--color-pen)"
+          className="mt-6 h-2 w-full cursor-pointer appearance-none rounded-full accent-(--color-brand)"
+          style={{ background: `linear-gradient(90deg, var(--color-brand) ${pct}%, var(--color-line) ${pct}%)` }}
         />
-        <div className="mt-1 flex justify-between text-sm text-faint">
-          <span>1</span>
-          <span>25</span>
+        <div className="mt-2 flex justify-between text-xs text-faint">
+          <span>1 year</span>
+          <span>25 years</span>
         </div>
       </div>
     </StepShell>
@@ -286,7 +317,7 @@ export function ExperienceStep() {
 const CURRENCIES = ['USD', 'EUR', 'GBP', 'AED', 'SAR', 'QAR', 'PKR', 'INR', 'CAD', 'AUD', 'SGD', 'CHF', 'PLN']
 
 export function SalaryStep() {
-  const { state, setProfile } = useFlow()
+  const { state, setProfile, next } = useFlow()
   const s = state.profile.salary
   const [minimum, setMinimum] = useState(s.minimum?.toString() ?? '')
   const [currency, setCurrency] = useState(s.currency)
@@ -301,11 +332,10 @@ export function SalaryStep() {
     setProfile(await api.patchProfile({ salary: { minimum: value, currency, period, strict } }))
   }
 
-  const { next } = useFlow()
   return (
     <StepShell
       title="What's the least you'd accept?"
-      lede="Most postings don't list a salary, so this only affects the ones that do. Amounts are compared in the same currency only."
+      lede="Most postings don't list a salary, so this only affects the ones that do. Amounts are compared in the same currency."
       onSubmit={() => save()}
       canSubmit={!minimumError}
       skipLabel="Skip this"
@@ -314,13 +344,14 @@ export function SalaryStep() {
         next()
       }}
     >
-      <div className="max-w-xl space-y-8">
+      <div className="max-w-xl space-y-6">
         <div className="flex flex-wrap items-start gap-3">
           <Field
             label="Minimum salary"
             inputMode="numeric"
             placeholder="e.g. 3500"
-            className="w-44"
+            icon={Wallet}
+            className="w-48"
             error={minimumError}
             value={minimum}
             onChange={(e) => setMinimum(e.target.value)}
@@ -329,32 +360,39 @@ export function SalaryStep() {
             <label htmlFor="currency" className="mb-1.5 block text-sm font-medium">
               Currency
             </label>
-            <select
-              id="currency"
-              value={currency}
-              onChange={(e) => setCurrency(e.target.value)}
-              className="h-11 rounded-md border border-rule bg-sheet px-3 focus:border-pen focus:outline-none"
-            >
+            <select id="currency" value={currency} onChange={(e) => setCurrency(e.target.value)} className={`${selectClass} w-28`}>
               {CURRENCIES.map((c) => (
                 <option key={c}>{c}</option>
               ))}
             </select>
           </div>
-          <div className="flex gap-2 sm:pt-7" role="radiogroup" aria-label="Pay period">
-            <Chip selected={period === 'month'} onToggle={() => setPeriod('month')}>
-              per month
-            </Chip>
-            <Chip selected={period === 'year'} onToggle={() => setPeriod('year')}>
-              per year
-            </Chip>
+          <div className="sm:pt-7">
+            <div role="radiogroup" aria-label="Pay period" className="inline-flex rounded-[10px] bg-subtle p-1">
+              {(['month', 'year'] as const).map((per) => (
+                <button
+                  key={per}
+                  type="button"
+                  role="radio"
+                  aria-checked={period === per}
+                  onClick={() => setPeriod(per)}
+                  className={`h-9 rounded-lg px-3.5 text-sm font-medium transition-colors duration-150 ${
+                    period === per ? 'bg-surface text-ink shadow-card' : 'text-muted hover:text-ink'
+                  }`}
+                >
+                  per {per}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
-        <Toggle
-          checked={strict}
-          onChange={setStrict}
-          label="Hide jobs that pay less"
-          description="When off, they stay in your list with a note that the pay is below your minimum."
-        />
+        <div className="rounded-2xl border border-line p-4">
+          <Toggle
+            checked={strict}
+            onChange={setStrict}
+            label="Hide jobs that pay less"
+            description="When off, they stay in your list with a note that the pay is below your minimum."
+          />
+        </div>
       </div>
     </StepShell>
   )
@@ -371,7 +409,7 @@ export function ExclusionsStep() {
       lede="Titles with these words are skipped without spending AI time. Filled in from your experience level; change them freely."
       onSubmit={async () => setProfile(await api.patchProfile({ exclude_title_words: words, dealbreakers }))}
     >
-      <div className="max-w-2xl space-y-10">
+      <div className="max-w-2xl space-y-8">
         <TagInput
           label="Skip titles containing"
           values={words}
@@ -380,7 +418,8 @@ export function ExclusionsStep() {
           hint="Whole words only, so intern won't block internal."
         />
         <div>
-          <label htmlFor="dealbreakers" className="mb-1.5 block text-sm font-medium">
+          <label htmlFor="dealbreakers" className="mb-1.5 flex items-center gap-2 text-sm font-medium">
+            <Ban aria-hidden className="size-4 text-faint" />
             Dealbreakers (optional)
           </label>
           <textarea
@@ -390,9 +429,9 @@ export function ExclusionsStep() {
             value={dealbreakers}
             onChange={(e) => setDealbreakers(e.target.value)}
             placeholder="e.g. No night shifts. No gambling or crypto companies. No roles that are mostly manual testing."
-            className="w-full rounded-md border border-rule bg-sheet px-3 py-2.5 text-[0.95rem] leading-relaxed placeholder:text-faint focus:border-pen focus:outline-none"
+            className="w-full rounded-xl border border-line bg-surface px-3.5 py-3 text-base leading-relaxed shadow-card transition-[border-color,box-shadow] duration-150 placeholder:text-faint hover:border-line-strong focus:border-brand focus:ring-4 focus:ring-brand/15 focus:outline-none sm:text-[0.9375rem]"
           />
-          <p className="mt-1.5 text-sm text-graphite">The AI reads these and scores matching jobs low.</p>
+          <p className="mt-1.5 text-sm text-muted">The AI reads these and scores matching jobs low.</p>
         </div>
       </div>
     </StepShell>
@@ -409,29 +448,32 @@ export function FreshnessStep() {
       lede="Older postings are often filled already. Postings without a date are always kept."
       onSubmit={async () => setProfile(await api.patchProfile({ max_age_days: days, max_jobs_to_score: budget }))}
     >
-      <div className="max-w-xl space-y-10">
-        <div role="radiogroup" aria-label="Posted within" className="flex flex-wrap gap-2">
-          {[7, 14, 21, 30].map((d) => (
-            <Chip key={d} selected={days === d} onToggle={() => setDays(d)}>
-              Last {d} days
-            </Chip>
-          ))}
+      <div className="max-w-xl space-y-8">
+        <div>
+          <h2 className="mb-3 flex items-center gap-2 text-sm font-medium">
+            <CalendarDays aria-hidden className="size-4 text-brand" />
+            Posted within
+          </h2>
+          <div role="radiogroup" aria-label="Posted within" className="flex flex-wrap gap-2">
+            {[7, 14, 21, 30].map((d) => (
+              <Chip key={d} selected={days === d} onToggle={() => setDays(d)}>
+                Last {d} days
+              </Chip>
+            ))}
+          </div>
         </div>
         <div>
-          <h2 className="text-sm font-medium">Jobs the AI reads per search</h2>
-          <div role="radiogroup" aria-label="Jobs read per search" className="mt-2">
+          <h2 className="mb-3 flex items-center gap-2 text-sm font-medium">
+            <MapPin aria-hidden className="size-4 text-brand" />
+            Jobs the AI reads per search
+          </h2>
+          <div role="radiogroup" aria-label="Jobs read per search" className="grid gap-3">
             {[
-              { n: 30, title: '30', description: 'About two minutes. Easy on the free Groq limit.' },
-              { n: 60, title: '60', description: 'About four minutes. A good daily default.' },
-              { n: 120, title: '120', description: 'About ten minutes. Add a backup AI key for this.' },
+              { n: 30, title: '30 jobs', description: 'About two minutes. Easy on the free Groq limit.' },
+              { n: 60, title: '60 jobs', description: 'About four minutes. A good daily default.' },
+              { n: 120, title: '120 jobs', description: 'About ten minutes. Add a backup AI key for this.' },
             ].map((o) => (
-              <OptionRow
-                key={o.n}
-                selected={budget === o.n}
-                onSelect={() => setBudget(o.n)}
-                title={o.title}
-                description={o.description}
-              />
+              <OptionCard key={o.n} selected={budget === o.n} onSelect={() => setBudget(o.n)} title={o.title} description={o.description} />
             ))}
           </div>
         </div>

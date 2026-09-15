@@ -1,41 +1,72 @@
+import {
+  Building2,
+  ChevronDown,
+  Globe,
+  Link,
+  Mail,
+  Pencil,
+  Radar,
+  Rocket,
+  Search,
+  Send,
+  Trash2,
+  type LucideIcon,
+} from 'lucide-react'
+import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
 import { useState, type ReactNode } from 'react'
 import { api, ApiError, type Profile } from '../api'
-import { Button, ExternalLink, Field, Notice, Toggle } from '../ui/ui'
+import { Badge, Button, ExternalLink, Field, IconTile, Notice, Toggle } from '../ui/ui'
 import { useFlow } from './flow'
 import { KeyForm } from './KeyForm'
 import { StepShell } from './StepShell'
 
-function SourceBlock({
+function SourceCard({
   name,
+  description,
+  icon,
   status,
   children,
-  open: initiallyOpen = false,
 }: {
   name: string
+  description: string
+  icon: LucideIcon
   status: ReactNode
   children?: ReactNode
-  open?: boolean
 }) {
-  const [open, setOpen] = useState(initiallyOpen)
+  const [open, setOpen] = useState(false)
+  const reduce = useReducedMotion()
   return (
-    <div className="border-b border-rule py-5 first:border-t">
-      <div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1">
-        <h3 className="text-[1.05rem] font-medium">{name}</h3>
-        <div className="flex items-baseline gap-4 text-sm text-graphite">
-          {status}
-          {children && (
-            <button
-              type="button"
-              aria-expanded={open}
-              onClick={() => setOpen(!open)}
-              className="text-ink underline decoration-rule underline-offset-4 hover:decoration-graphite"
-            >
-              {open ? 'Close' : 'Set up'}
-            </button>
-          )}
+    <div className="min-w-0 rounded-2xl border border-line bg-surface shadow-card">
+      <div className="flex items-center gap-3 p-4 sm:gap-4">
+        <IconTile icon={icon} tone="neutral" />
+        <div className="min-w-0 flex-1">
+          <h3 className="font-medium">{name}</h3>
+          <p className="truncate text-sm text-muted">{description}</p>
         </div>
+        <div className="hidden sm:block">{status}</div>
+        {children && (
+          <Button variant="ghost" size="sm" aria-expanded={open} onClick={() => setOpen(!open)}>
+            {open ? 'Close' : 'Set up'}
+            <ChevronDown aria-hidden className={`size-4 transition-transform duration-200 ${open ? 'rotate-180' : ''}`} />
+          </Button>
+        )}
       </div>
-      {open && children && <div className="mt-5 max-w-lg">{children}</div>}
+      <AnimatePresence initial={false}>
+        {open && children && (
+          <motion.div
+            initial={reduce ? false : { height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={reduce ? { opacity: 0 } : { height: 0, opacity: 0 }}
+            transition={{ duration: 0.22, ease: [0.25, 1, 0.5, 1] }}
+            className="overflow-hidden"
+          >
+            <div className="border-t border-line p-5">
+              <div className="mb-4 sm:hidden">{status}</div>
+              <div className="max-w-lg">{children}</div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }
@@ -75,7 +106,8 @@ export function SourcesStep() {
   }
 
   const wantsRemote = p.work_modes.includes('remote')
-  const keyState = (set: boolean) => (set ? <span className="text-ok">Connected</span> : <span>Not connected</span>)
+  const keyState = (set: boolean) =>
+    set ? <Badge tone="success">Connected</Badge> : <Badge>Not connected</Badge>
 
   return (
     <StepShell
@@ -83,46 +115,44 @@ export function SourcesStep() {
       lede="Remote job boards work without any setup. Each free key below adds a larger pool of jobs, especially for on-site roles. You can add them later in Settings."
       onSubmit={async () => setProfile(await api.patchProfile({ sources }))}
     >
-      <div className="max-w-2xl">
-        <SourceBlock
+      <div className="grid max-w-2xl grid-cols-1 gap-3">
+        <SourceCard
           name="Remote job boards"
-          status={wantsRemote ? <span className="text-ok">Ready, no key needed</span> : 'Used for remote jobs only'}
+          description="Himalayas, Remotive, RemoteOK and Arbeitnow"
+          icon={Globe}
+          status={wantsRemote ? <Badge tone="success">Ready</Badge> : <Badge>Remote only</Badge>}
         >
-          <p className="mb-4 text-sm text-graphite">Himalayas, Remotive, RemoteOK and Arbeitnow.</p>
           <Toggle checked={sources.remote_boards} onChange={(v) => on('remote_boards', v)} label="Search remote job boards" />
-        </SourceBlock>
+        </SourceCard>
 
-        <SourceBlock name="JSearch (Google for Jobs)" status={keyState(keys.RAPIDAPI_KEY?.set)}>
+        <SourceCard name="JSearch" description="Google for Jobs: LinkedIn, Indeed, Glassdoor" icon={Search} status={keyState(keys.RAPIDAPI_KEY?.set)}>
           <KeyForm
             service="rapidapi"
             envKey="RAPIDAPI_KEY"
             fields={[{ name: 'key', label: 'RapidAPI key' }]}
             help={
-              <p className="text-sm text-graphite">
-                Covers LinkedIn, Indeed, Glassdoor and local boards through Google. Open{' '}
-                <ExternalLink href="https://rapidapi.com/letscrape-6bRBa3QguO5/api/jsearch">JSearch on RapidAPI</ExternalLink>,
-                subscribe to the free Basic plan, then copy the X-RapidAPI-Key value. The free plan allows about 200
-                searches a month, so each run uses six.
+              <p className="text-sm text-muted">
+                Open <ExternalLink href="https://rapidapi.com/letscrape-6bRBa3QguO5/api/jsearch">JSearch on RapidAPI</ExternalLink>,
+                subscribe to the free Basic plan, then copy the X-RapidAPI-Key value. About 200 searches a month; each run uses six.
               </p>
             }
           />
-        </SourceBlock>
+        </SourceCard>
 
-        <SourceBlock name="Jooble" status={keyState(keys.JOOBLE_API_KEY?.set)}>
+        <SourceCard name="Jooble" description="Strong in the Middle East, Asia, Eastern Europe" icon={Radar} status={keyState(keys.JOOBLE_API_KEY?.set)}>
           <KeyForm
             service="jooble"
             envKey="JOOBLE_API_KEY"
             fields={[{ name: 'key', label: 'Jooble API key' }]}
             help={
-              <p className="text-sm text-graphite">
-                Strong in the Middle East, Asia and Eastern Europe. Request a key at{' '}
-                <ExternalLink href="https://jooble.org/api/about">jooble.org/api/about</ExternalLink>; it arrives by email.
+              <p className="text-sm text-muted">
+                Request a key at <ExternalLink href="https://jooble.org/api/about">jooble.org/api/about</ExternalLink>; it arrives by email.
               </p>
             }
           />
-        </SourceBlock>
+        </SourceCard>
 
-        <SourceBlock name="Adzuna" status={keyState(keys.ADZUNA_APP_KEY?.set)}>
+        <SourceCard name="Adzuna" description="US, UK, Europe, India, Australia" icon={Radar} status={keyState(keys.ADZUNA_APP_KEY?.set)}>
           <KeyForm
             service="adzuna"
             envKey="ADZUNA_APP_KEY"
@@ -131,30 +161,30 @@ export function SourcesStep() {
               { name: 'app_key', label: 'App key' },
             ]}
             help={
-              <p className="text-sm text-graphite">
-                Large pools in the US, UK, Europe, India and Australia, with exact posting dates. Register at{' '}
-                <ExternalLink href="https://developer.adzuna.com/signup">developer.adzuna.com</ExternalLink>.
+              <p className="text-sm text-muted">
+                Register at <ExternalLink href="https://developer.adzuna.com/signup">developer.adzuna.com</ExternalLink>.
               </p>
             }
           />
-        </SourceBlock>
+        </SourceCard>
 
-        <SourceBlock
+        <SourceCard
           name="Company career pages"
-          status={p.career_pages.length ? `${p.career_pages.length} added` : 'None yet'}
+          description="Straight from employers you'd like to work for"
+          icon={Building2}
+          status={p.career_pages.length ? <Badge tone="brand">{p.career_pages.length} added</Badge> : <Badge>None yet</Badge>}
         >
-          <p className="text-sm text-graphite">
-            Jobs straight from employers you'd like to work for, often before they reach any board. Paste the link to the
-            company's job list if it runs on Greenhouse, Lever, Ashby, Workable, SmartRecruiters or Recruitee.
+          <p className="text-sm text-muted">
+            Paste the link to a company's job list if it runs on Greenhouse, Lever, Ashby, Workable, SmartRecruiters or Recruitee.
           </p>
           {p.career_pages.length > 0 && (
-            <ul className="mt-4 divide-y divide-rule border-y border-rule">
+            <ul className="mt-4 divide-y divide-line rounded-xl border border-line">
               {p.career_pages.map((c) => (
-                <li key={`${c.provider}-${c.slug}`} className="flex items-center justify-between py-2.5">
-                  <span>
-                    {c.company} <span className="text-sm text-graphite">on {c.provider}</span>
+                <li key={`${c.provider}-${c.slug}`} className="flex items-center justify-between gap-3 px-3.5 py-2">
+                  <span className="text-sm">
+                    <span className="font-medium">{c.company}</span> <span className="text-muted">on {c.provider}</span>
                   </span>
-                  <Button variant="plain" onClick={() => void removePage(c.slug, c.provider)}>
+                  <Button variant="ghost" size="sm" icon={Trash2} onClick={() => void removePage(c.slug, c.provider)}>
                     Remove
                   </Button>
                 </li>
@@ -173,12 +203,13 @@ export function SourcesStep() {
             <Field
               label="Careers page link"
               type="url"
+              icon={Link}
               className="flex-1"
               placeholder="https://jobs.lever.co/company"
               value={url}
               onChange={(e) => setUrl(e.target.value)}
             />
-            <Button variant="quiet" onClick={addPage} busy={adding} disabled={!url.trim()}>
+            <Button variant="secondary" onClick={addPage} busy={adding} disabled={!url.trim()}>
               Add
             </Button>
           </div>
@@ -187,16 +218,20 @@ export function SourcesStep() {
               <Notice tone={pageMsg.ok ? 'ok' : 'error'}>{pageMsg.text}</Notice>
             </div>
           )}
-        </SourceBlock>
+        </SourceCard>
 
-        <SourceBlock name="LinkedIn" status={sources.linkedin ? 'On' : 'Off'}>
-          <p className="mb-4 text-sm text-graphite">
-            Reads LinkedIn's public job search without signing in. LinkedIn's terms don't allow automated access and it
-            may block your connection for a while, so it's off unless you turn it on. JSearch reaches most of the same
-            postings.
+        <SourceCard
+          name="LinkedIn"
+          description="Public job search, off by default"
+          icon={Globe}
+          status={sources.linkedin ? <Badge tone="warning">On</Badge> : <Badge>Off</Badge>}
+        >
+          <p className="mb-4 text-sm text-muted">
+            Reads LinkedIn's public job search without signing in. LinkedIn's terms don't allow automated access and it may block
+            your connection for a while. JSearch reaches most of the same postings.
           </p>
           <Toggle checked={sources.linkedin} onChange={(v) => on('linkedin', v)} label="Search LinkedIn" />
-        </SourceBlock>
+        </SourceCard>
       </div>
     </StepShell>
   )
@@ -225,12 +260,13 @@ export function EmailStep() {
 
   return (
     <StepShell
+      eyebrow={<Badge icon={Mail}>Optional</Badge>}
       title="Get the shortlist by email"
-      lede="Optional. While Shortlist is running, it searches once a day at the time you pick and emails you what it found, from your own Gmail."
+      lede="While Shortlist is running, it searches once a day at the time you pick and emails you what it found, from your own Gmail."
       onSubmit={async () => setProfile(await api.patchProfile({ digest_enabled: enabled && Boolean(connected), digest_time: time }))}
       submitLabel={connected ? 'Continue' : 'Skip email'}
     >
-      <div className="max-w-lg space-y-8">
+      <div className="max-w-lg space-y-6">
         <KeyForm
           service="gmail"
           envKey="GMAIL_APP_PASSWORD"
@@ -240,21 +276,19 @@ export function EmailStep() {
             { name: 'recipient', label: 'Send to a different address (optional)', type: 'email', optional: true },
           ]}
           help={
-            <p className="text-sm text-graphite">
+            <p className="text-sm text-muted">
               Gmail needs an app password, not your normal one. Turn on 2-Step Verification, then create one at{' '}
               <ExternalLink href="https://myaccount.google.com/apppasswords">myaccount.google.com/apppasswords</ExternalLink>.
             </p>
           }
         />
         {connected && (
-          <div className="space-y-5 border-t border-rule pt-6">
+          <div className="space-y-5 rounded-2xl border border-line p-5">
             <Toggle checked={enabled} onChange={setEnabled} label="Search and email me every day" />
-            {enabled && (
-              <Field label="At" type="time" className="w-36" value={time} onChange={(e) => setTime(e.target.value)} />
-            )}
+            {enabled && <Field label="At" type="time" className="w-40" value={time} onChange={(e) => setTime(e.target.value)} />}
             {mode === 'settings' && (
-              <div className="flex flex-wrap items-center gap-4">
-                <Button variant="quiet" onClick={sendTest} busy={testing}>
+              <div className="flex flex-wrap items-center gap-3">
+                <Button variant="secondary" icon={Send} onClick={sendTest} busy={testing}>
                   Send a test email
                 </Button>
                 {testMsg && <Notice tone={testMsg.ok ? 'ok' : 'error'}>{testMsg.text}</Notice>}
@@ -283,11 +317,7 @@ export function ReviewStep({ goTo, onFinish }: { goTo: (id: string) => void; onF
     { label: 'Looking for', value: p.titles.join(', '), step: 'titles' },
     { label: 'Skills', value: `${p.skills.length} from your resume`, step: 'resume' },
     { label: 'Work', value: p.work_modes.join(', '), step: 'work' },
-    {
-      label: 'Countries',
-      value: p.target_countries.length ? p.target_countries.map(nameOf).join(', ') : 'Anywhere',
-      step: 'places',
-    },
+    { label: 'Countries', value: p.target_countries.length ? p.target_countries.map(nameOf).join(', ') : 'Anywhere', step: 'places' },
     { label: 'Visa', value: p.needs_visa ? 'Needs sponsorship' : 'No sponsorship needed', step: 'visa' },
     { label: 'Experience asked', value: `Up to ${p.max_years_required ?? 'any'} years`, step: 'experience' },
     {
@@ -302,6 +332,7 @@ export function ReviewStep({ goTo, onFinish }: { goTo: (id: string) => void; onF
 
   return (
     <StepShell
+      eyebrow={<Badge tone="success" icon={Rocket}>Almost there</Badge>}
       title="Ready for your first search"
       lede={
         sourceCount === 0
@@ -312,19 +343,15 @@ export function ReviewStep({ goTo, onFinish }: { goTo: (id: string) => void; onF
       canSubmit={sourceCount > 0}
       onSubmit={onFinish}
     >
-      <dl className="max-w-2xl border-t border-rule">
+      <dl className="max-w-2xl divide-y divide-line overflow-hidden rounded-2xl border border-line">
         {rows.map((r) => (
-          <div key={r.label} className="grid grid-cols-[9rem_1fr_auto] items-baseline gap-4 border-b border-rule py-3.5 max-sm:grid-cols-[1fr_auto]">
-            <dt className="text-sm text-graphite max-sm:col-span-2">{r.label}</dt>
-            <dd className="text-[0.95rem]">{r.value}</dd>
+          <div key={r.label} className="flex items-center gap-4 px-4 py-3 transition-colors hover:bg-subtle/60 sm:px-5">
+            <dt className="w-32 shrink-0 text-sm text-muted sm:w-40">{r.label}</dt>
+            <dd className="min-w-0 flex-1 text-[0.9375rem] font-medium">{r.value}</dd>
             <dd>
-              <button
-                type="button"
-                onClick={() => goTo(r.step)}
-                className="text-sm text-graphite underline decoration-rule underline-offset-4 hover:text-ink"
-              >
-                Edit<span className="sr-only"> {r.label}</span>
-              </button>
+              <Button variant="ghost" size="sm" icon={Pencil} onClick={() => goTo(r.step)} aria-label={`Edit ${r.label}`}>
+                <span className="hidden sm:inline">Edit</span>
+              </Button>
             </dd>
           </div>
         ))}

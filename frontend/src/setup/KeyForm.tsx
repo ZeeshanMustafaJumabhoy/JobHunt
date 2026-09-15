@@ -1,3 +1,4 @@
+import { CircleCheck, KeyRound } from 'lucide-react'
 import { useState, type ReactNode } from 'react'
 import { api, ApiError } from '../api'
 import { Button, Field, Notice } from '../ui/ui'
@@ -58,14 +59,15 @@ export function KeyForm({
 
   if (!editing && saved?.set) {
     return (
-      <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-        <p className="text-[0.95rem]">
-          Saved <span className="text-graphite">{saved.hint}</span>
+      <div className="flex flex-wrap items-center gap-3 rounded-xl border border-success/25 bg-success-soft px-4 py-3">
+        <CircleCheck aria-hidden className="size-5 text-success" />
+        <p className="text-[0.9375rem] font-medium text-ink">
+          Saved <span className="ml-1 font-normal text-muted tabular-nums">{saved.hint}</span>
         </p>
-        <Button variant="plain" onClick={() => setEditing(true)}>
+        <Button variant="ghost" size="sm" className="ml-auto" onClick={() => setEditing(true)}>
           Replace
         </Button>
-        {result?.ok && <Notice tone="ok">{result.message}</Notice>}
+        {result?.ok && <span className="sr-only" role="status">{result.message}</span>}
       </div>
     )
   }
@@ -88,6 +90,7 @@ export function KeyForm({
           key={f.name}
           label={f.label}
           type={f.type ?? 'password'}
+          icon={f.type === 'password' || !f.type ? KeyRound : undefined}
           autoComplete="off"
           spellCheck={false}
           placeholder={f.placeholder}
@@ -95,17 +98,21 @@ export function KeyForm({
           onChange={(e) => setValues((v) => ({ ...v, [f.name]: e.target.value }))}
         />
       ))}
-      <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-        <Button variant="quiet" onClick={save} busy={busy} disabled={!ready}>
+      <div className="flex flex-wrap items-center gap-3">
+        <Button variant="secondary" onClick={save} busy={busy} disabled={!ready}>
           {busy ? 'Testing' : saveLabel}
         </Button>
         {saved?.set && (
-          <Button variant="plain" onClick={() => setEditing(false)}>
+          <Button variant="ghost" onClick={() => setEditing(false)}>
             Keep the saved one
           </Button>
         )}
       </div>
-      {result && <Notice tone={result.ok ? 'ok' : 'error'}>{result.message}</Notice>}
+      {result && (
+        <div>
+          <Notice tone={result.ok ? 'ok' : 'error'}>{result.message}</Notice>
+        </div>
+      )}
     </div>
   )
 }
