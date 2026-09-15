@@ -284,11 +284,7 @@ export function ScoreRing({ score, size = 56 }: { score: number; size?: number }
 export function Logo() {
   return (
     <span className="inline-flex items-center gap-2 text-[1.0625rem] font-semibold tracking-tight text-ink">
-      <span className="grid size-8 place-items-center rounded-[10px] bg-gradient-to-br from-brand to-brand-2 text-white shadow-brand">
-        <svg viewBox="0 0 24 24" className="size-4.5" fill="none" stroke="currentColor" strokeWidth={2.4} strokeLinecap="round" aria-hidden>
-          <path d="M5 7h14M5 12h14M5 17h8" />
-        </svg>
-      </span>
+      <img src="/logo.png" alt="" className="size-8 rounded-[10px] shadow-brand" />
       Shortlist
     </span>
   )

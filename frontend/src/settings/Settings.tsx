@@ -8,6 +8,7 @@ import {
   KeyRound,
   Laptop,
   Mail,
+  Percent,
   Plane,
   Radar,
   TrendingUp,
@@ -18,7 +19,16 @@ import { useState, type ReactNode } from 'react'
 import { api, ApiError, type AppState, type KeyStatus, type Profile, type Reference } from '../api'
 import { FlowProvider } from '../setup/flow'
 import { EmailStep, SourcesStep } from '../setup/steps-finish'
-import { ExclusionsStep, ExperienceStep, FreshnessStep, PlacesStep, SalaryStep, VisaStep, WorkModeStep } from '../setup/steps-prefs'
+import {
+  ExclusionsStep,
+  ExperienceStep,
+  FreshnessStep,
+  MatchStep,
+  PlacesStep,
+  SalaryStep,
+  VisaStep,
+  WorkModeStep,
+} from '../setup/steps-prefs'
 import { AiKeyStep, ResumeStep, TitlesStep } from '../setup/steps-start'
 import { Button, Notice } from '../ui/ui'
 
@@ -29,6 +39,7 @@ const SECTIONS: { id: string; label: string; icon: LucideIcon; render: () => Rea
   { id: 'places', label: 'Countries', icon: Globe, render: () => <PlacesStep /> },
   { id: 'visa', label: 'Visa', icon: Plane, render: () => <VisaStep /> },
   { id: 'experience', label: 'Experience', icon: TrendingUp, render: () => <ExperienceStep /> },
+  { id: 'match', label: 'Match threshold', icon: Percent, render: () => <MatchStep /> },
   { id: 'salary', label: 'Salary', icon: Wallet, render: () => <SalaryStep /> },
   { id: 'exclusions', label: 'Exclusions', icon: Ban, render: () => <ExclusionsStep /> },
   { id: 'freshness', label: 'Recency', icon: CalendarDays, render: () => <FreshnessStep /> },

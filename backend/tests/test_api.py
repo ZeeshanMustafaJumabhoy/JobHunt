@@ -1,6 +1,6 @@
 import pytest
 from fastapi.testclient import TestClient
-from shortlist import api, envfile, keys, llm, pipeline, store
+from shortlist import api, ats, envfile, keys, llm, pipeline, store
 from shortlist import profile as profile_mod
 
 H = {"X-Shortlist": "1"}
@@ -84,6 +84,33 @@ def test_resume_upload_fills_profile(client, groq_ok, monkeypatch):
     assert p["suggested_titles"] == ["Data Analyst", "BI Analyst"]
     assert p["max_years_required"] == 8
     assert "principal" in p["exclude_title_words"]
+
+
+def test_resume_scan_requires_resume(client, groq_ok):
+    client.post("/api/keys/groq", json={"key": "gsk_goodkey123456"}, headers=H)
+    r = client.post("/api/resume/scan", headers=H)
+    assert r.status_code == 400 and "resume" in r.json()["detail"].lower()
+
+
+def test_resume_scan_runs_and_then_cools_down(client, groq_ok, monkeypatch):
+    client.post("/api/keys/groq", json={"key": "gsk_goodkey123456"}, headers=H)
+    profile_mod.update({"resume_text": "Sara Khan, data analyst with 4 years of experience."})
+    monkeypatch.setattr(ats, "scan_resume", lambda profile, providers, job=None: {
+        "score": 72, "summary": "Solid, a few gaps.",
+        "checks": [{"category": "Keywords", "status": "good", "note": "Covers the core terms."}],
+        "suggestions": ["Add a metric to your top bullet."],
+    })
+
+    first = client.post("/api/resume/scan", headers=H)
+    assert first.status_code == 200, first.text
+    assert first.json()["scan"]["score"] == 72
+
+    again = client.post("/api/resume/scan", headers=H)
+    assert again.status_code == 429
+    assert "rescan" in again.json()["detail"].lower()
+
+    fetched = client.get("/api/resume/scan", headers=H)
+    assert fetched.json()["scan"]["summary"] == "Solid, a few gaps."
 
 
 def test_titles_fall_back_when_ai_fails(client, monkeypatch):

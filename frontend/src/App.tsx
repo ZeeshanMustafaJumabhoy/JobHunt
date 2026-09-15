@@ -1,15 +1,18 @@
-import { LayoutList, Settings as SettingsIcon, WifiOff } from 'lucide-react'
+import { FileSearch, LayoutList, Settings as SettingsIcon, WifiOff } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
 import { api, ApiError, type AppState, type Reference } from './api'
 import { Dashboard } from './jobs/Dashboard'
+import { AtsPortal } from './resume/AtsPortal'
 import { Settings } from './settings/Settings'
 import { Setup } from './setup/Setup'
 import { Button, Logo, Skeleton } from './ui/ui'
 
-type Page = 'jobs' | 'settings'
+type Page = 'jobs' | 'resume' | 'settings'
 
 function pageFromHash(): Page {
-  return window.location.hash.startsWith('#/settings') ? 'settings' : 'jobs'
+  if (window.location.hash.startsWith('#/settings')) return 'settings'
+  if (window.location.hash.startsWith('#/resume')) return 'resume'
+  return 'jobs'
 }
 
 function navClass(active: boolean) {
@@ -97,6 +100,10 @@ export default function App() {
                 <LayoutList aria-hidden className="size-4" />
                 Jobs
               </a>
+              <a href="#/resume" aria-current={page === 'resume' ? 'page' : undefined} className={navClass(page === 'resume')}>
+                <FileSearch aria-hidden className="size-4" />
+                Resume score
+              </a>
               <a href="#/settings" aria-current={page === 'settings' ? 'page' : undefined} className={navClass(page === 'settings')}>
                 <SettingsIcon aria-hidden className="size-4" />
                 Settings
@@ -114,6 +121,8 @@ export default function App() {
       <main className="mx-auto max-w-6xl px-5 pt-8 pb-24 sm:px-8 sm:pt-10">
         {page === 'jobs' ? (
           <Dashboard state={state} onState={setState} />
+        ) : page === 'resume' ? (
+          <AtsPortal state={state} />
         ) : (
           <Settings state={state} reference={reference} onState={setState} />
         )}

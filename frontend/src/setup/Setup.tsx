@@ -9,6 +9,7 @@ import {
   ExclusionsStep,
   ExperienceStep,
   FreshnessStep,
+  MatchStep,
   PlacesStep,
   SalaryStep,
   VisaStep,
@@ -25,6 +26,7 @@ const STEPS = [
   { id: 'places', group: 'Preferences' },
   { id: 'visa', group: 'Preferences' },
   { id: 'experience', group: 'Preferences' },
+  { id: 'match', group: 'Preferences' },
   { id: 'salary', group: 'Preferences' },
   { id: 'exclusions', group: 'Preferences' },
   { id: 'freshness', group: 'Preferences' },
@@ -117,6 +119,7 @@ export function Setup({
     places: () => <PlacesStep />,
     visa: () => <VisaStep />,
     experience: () => <ExperienceStep />,
+    match: () => <MatchStep />,
     salary: () => <SalaryStep />,
     exclusions: () => <ExclusionsStep />,
     freshness: () => <FreshnessStep />,
@@ -129,6 +132,9 @@ export function Setup({
   const prefSteps = STEPS.filter((s) => s.group === 'Preferences')
   const prefPos = prefSteps.findIndex((s) => s.id === step.id)
   const total = STEPS.length - 1
+  // The header counts the same groups the sidebar numbers (1 of 7), not every
+  // individual question inside "Preferences" — those get their own sub-count.
+  const groupNumber = GROUPS.indexOf(currentGroup) + 1
   const isWelcome = index === 0
 
   const content = (
@@ -156,7 +162,7 @@ export function Setup({
             <Logo />
             {!isWelcome && (
               <span className="text-sm text-muted tabular-nums">
-                Step {index} of {total}
+                Step {groupNumber} of {GROUPS.length}
               </span>
             )}
           </div>

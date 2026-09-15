@@ -151,14 +151,17 @@ def allocate_budget(jobs: list[dict], total: int) -> list[dict]:
     return picked[:total]
 
 
-def tier_for(score: int) -> str:
+def tier_for(score: int, min_match_score: int = 50) -> str:
+    """apply/strong stay at their fixed, recruiter-judgment bar; the maybe/low
+    line is the user's own minimum match, so raising it hides weaker matches
+    without pretending an 82 and a 45 are the same kind of "not quite" match."""
+    if score < min_match_score:
+        return "low"
     if score >= 80:
         return "apply"
     if score >= 65:
         return "strong"
-    if score >= 50:
-        return "maybe"
-    return "low"
+    return "maybe"
 
 
 def salary_below_minimum(verdict: dict, profile: Profile) -> bool:
@@ -308,7 +311,7 @@ def run_search(profile: Profile, s: RunState, log: Callable[[str], None], stats:
                 break
             continue
         job.update(verdict)
-        job["tier"] = tier_for(job["score"])
+        job["tier"] = tier_for(job["score"], profile.min_match_score)
         job["salary_below_minimum"] = salary_below_minimum(verdict, profile)
         if job["salary_below_minimum"] and profile.salary.strict:
             job["tier"] = "low"

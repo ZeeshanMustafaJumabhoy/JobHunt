@@ -69,6 +69,9 @@ class Profile(BaseModel):
     exclude_title_words: list[str] = Field(default_factory=list)
     dealbreakers: str = ""
     max_age_days: int = Field(default=21, ge=1, le=90)
+    # How closely a job must match the resume, titles and experience to be worth
+    # showing at all. Below this, a job is filed as "low" instead of surfaced.
+    min_match_score: int = Field(default=50, ge=40, le=90)
 
     # Where to look
     sources: Sources = Field(default_factory=Sources)
