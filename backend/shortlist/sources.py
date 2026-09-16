@@ -242,10 +242,12 @@ def fetch_jsearch(ctx: Context) -> list[dict]:
         if ctx.should_stop():
             break
         try:
-            r = requests.get(f"https://{JSEARCH_HOST}/search", timeout=25, headers={
+            # search-v2, not search: RapidAPI now lists /search as the legacy
+            # endpoint. v2 pages via a cursor instead of page/num_pages, but
+            # a first request needs neither, so this asks for page one plain.
+            r = requests.get(f"https://{JSEARCH_HOST}/search-v2", timeout=25, headers={
                 "X-RapidAPI-Key": key, "X-RapidAPI-Host": JSEARCH_HOST}, params={
-                "query": q, "page": "1", "num_pages": "1",
-                "country": code.lower(), "date_posted": "month"})
+                "query": q, "country": code.lower(), "date_posted": "month"})
             if r.status_code == 429:
                 ctx.log("JSearch: monthly quota used up, skipping the rest")
                 break

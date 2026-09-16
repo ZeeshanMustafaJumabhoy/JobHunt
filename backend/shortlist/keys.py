@@ -73,9 +73,12 @@ def check_jooble(key: str) -> tuple[bool, str]:
 def check_rapidapi(key: str) -> tuple[bool, str]:
     host = "jsearch.p.rapidapi.com"
     try:
-        r = requests.get(f"https://{host}/search", timeout=30,
+        # search-v2, not search: RapidAPI now lists /search as the legacy
+        # endpoint. v2 uses a cursor for later pages, but takes no cursor at
+        # all to just check a key like this.
+        r = requests.get(f"https://{host}/search-v2", timeout=30,
                          headers={"X-RapidAPI-Key": key, "X-RapidAPI-Host": host},
-                         params={"query": "engineer", "page": "1", "num_pages": "1"})
+                         params={"query": "engineer"})
     except requests.RequestException as e:
         return _network_error(e)
     if r.status_code == 200:

@@ -69,6 +69,25 @@ export function StepShell({
     })
   }
 
+  async function goBack() {
+    if (busy) return
+    // Save what's on this step before leaving it — otherwise picking
+    // something here and then going Back loses it, since only "Continue"
+    // used to save at all. Best-effort: an invalid or empty step (nothing
+    // picked yet) shouldn't block leaving, so a failed save is swallowed.
+    if (onSubmit && (!preview || alwaysSubmit)) {
+      setBusy(true)
+      try {
+        await onSubmit()
+      } catch {
+        // Nothing to save, or saving failed — either way, still go back.
+      } finally {
+        setBusy(false)
+      }
+    }
+    back()
+  }
+
   const setup = mode === 'setup'
   if (heroLayout) {
     return (
@@ -106,7 +125,7 @@ export function StepShell({
         }`}
       >
         {setup && showBack && (
-          <Button variant="ghost" icon={ArrowLeft} onClick={back}>
+          <Button variant="ghost" icon={ArrowLeft} busy={busy} onClick={() => void goBack()}>
             Back
           </Button>
         )}
