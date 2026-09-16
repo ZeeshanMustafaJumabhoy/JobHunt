@@ -22,7 +22,7 @@ Everything stays on your machine. API keys are written to `.env` in this folder,
 
 ## Get started
 
-You need **Python 3.11+** and **Node.js 20+** installed on your machine before anything else. Check what you have:
+You need **Python 3.11+** and **Node.js 20+** installed on your machine before anything else — but they don't have to be the ones your terminal runs by default; see the note below. Check what you have:
 
 ```bash
 python3 --version
@@ -34,12 +34,16 @@ Then, from a terminal:
 ```bash
 git clone https://github.com/ZeeshanMustafaJumabhoy/JobHunt.git
 cd JobHunt
-python start.py
+python3 start.py
 ```
+
+(On Windows, use `python start.py` — Windows installs Python as `python`, not `python3`.)
 
 That one command does everything else for you: it creates a local Python environment in `.venv/`, installs the backend's dependencies into it, installs the frontend's dependencies into `frontend/node_modules/`, builds the interface, and opens `http://localhost:8421` in your browser. The on-screen setup walks you through the rest — connecting a free AI key, adding your resume, and picking what you're looking for.
 
-Nothing is installed globally and nothing leaves this folder. Re-running `python start.py` later is instant — it only reinstalls when a dependency file has actually changed.
+Nothing is installed globally and nothing leaves this folder. Re-running `python3 start.py` later is instant — it only reinstalls when a dependency file has actually changed.
+
+**If `python3 --version` shows something older than 3.11** (very common on macOS, which ships Python 3.9 with Xcode's command line tools): you don't need to fix that yourself. `start.py` looks for a newer Python already on your machine — for example one installed via `brew install python@3.13` — and uses that automatically, even though the command you typed was the older one. It only fails if there's truly no 3.11+ anywhere, in which case it tells you exactly what to install.
 
 ### Keys you'll be asked for
 
@@ -61,7 +65,7 @@ In plain words: Shortlist is really two small programs, both running on your own
 - **The backend** is the "brain". It's a small Python program that remembers your resume and your answers, goes looking for jobs on your behalf, asks an AI to read each one, and saves the good ones. It never shows you anything directly — it just does the work.
 - **The frontend** is the "face". It's what you actually see in your browser: the setup questions, the list of jobs, the resume score page. Every button you click sends a message to the backend and shows you what comes back.
 
-When you run `python start.py`, both start together: the backend quietly starts listening in the background, and your browser opens showing the frontend, which talks to the backend behind the scenes.
+When you run `python3 start.py`, both start together: the backend quietly starts listening in the background, and your browser opens showing the frontend, which talks to the backend behind the scenes.
 
 When you click **Search now**, this is what happens, in order:
 
@@ -121,12 +125,12 @@ frontend/
 
 ## Development
 
-`python start.py` is enough for normal use. The steps below are for working on the code itself — running each side on its own, with hot reload, and running the test suites.
+`python3 start.py` is enough for normal use. The steps below are for working on the code itself — running each side on its own, with hot reload, and running the test suites.
 
 ### The quick way: both sides at once
 
 ```bash
-python start.py --dev          # frontend with hot reload on :5173, backend API on :8421
+python3 start.py --dev          # frontend with hot reload on :5173, backend API on :8421
 ```
 
 ### Backend only

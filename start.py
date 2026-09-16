@@ -1,12 +1,22 @@
-"""Start Shortlist with one command:
+"""Start Shortlist with one command (use "python" instead of "python3" on
+Windows, where that's usually the only one that exists):
 
-    python start.py            install what's missing, build the UI, open the browser
-    python start.py --dev      also run the Vite dev server with hot reload (for contributors)
-    python start.py --no-open  don't open a browser tab
+    python3 start.py            install what's missing, build the UI, open the browser
+    python3 start.py --dev      also run the Vite dev server with hot reload (for contributors)
+    python3 start.py --no-open  don't open a browser tab
 
-Needs Python 3.11+ and Node.js 20+. Everything is installed inside this folder:
+Needs Python 3.11+ and Node.js 20+ somewhere on this machine, and Node.js on
+this terminal's PATH. If the Python running this script itself is older
+(common on macOS, which ships Python 3.9 with Xcode's command line tools),
+it looks for a newer one already installed and uses that instead — nothing
+is installed globally either way. Everything goes inside this folder:
 Python packages into .venv/, JavaScript packages into frontend/node_modules/.
 """
+
+# This file must parse on whatever old Python happens to be running it (that's
+# the whole problem find_newer_python() below solves), so modern syntax like
+# `str | None` needs this to not fail before we even get a chance to look.
+from __future__ import annotations
 
 import argparse
 import hashlib
@@ -17,7 +27,6 @@ import sys
 import threading
 import time
 import urllib.request
-import venv
 import webbrowser
 from pathlib import Path
 
@@ -56,12 +65,61 @@ def fingerprint(*paths: Path) -> str:
     return h.hexdigest()
 
 
+def _python_version(executable: str) -> tuple:
+    try:
+        out = subprocess.run(
+            [executable, "-c", "import sys; print(sys.version_info.major, sys.version_info.minor)"],
+            capture_output=True, text=True, timeout=5,
+        )
+        major, minor = out.stdout.split()
+        return int(major), int(minor)
+    except Exception:
+        return (0, 0)
+
+
+def find_newer_python() -> str | None:
+    """The newest Python 3.11+ this machine has, even if the one running this
+    script is too old. macOS in particular ships an old Python with Xcode's
+    command line tools, so a fine one is often just sitting on PATH unused
+    (Homebrew's python3.13, python.org's installer, pyenv, ...) under a
+    version-suffixed name that "python3" doesn't point to."""
+    candidates = {p for p in (shutil.which("python3"), shutil.which("python")) if p}
+    for directory in os.environ.get("PATH", "").split(os.pathsep):
+        try:
+            names = os.listdir(directory)
+        except OSError:
+            continue
+        for name in names:
+            base = name[:-4] if IS_WINDOWS and name.lower().endswith(".exe") else name
+            if base.count(".") == 1:
+                prefix, suffix = base.split(".")
+                if prefix in ("python3", "python") and suffix.isdigit():
+                    candidates.add(os.path.join(directory, name))
+    best_version, best_path = (0, 0), None
+    for path in candidates:
+        version = _python_version(path)
+        if version >= (3, 11) and version > best_version:
+            best_version, best_path = version, path
+    return best_path
+
+
 def ensure_python() -> None:
-    if sys.version_info < (3, 11):  # noqa: UP036 - start.py runs on whatever Python the user has
-        fail(f"Shortlist needs Python 3.11 or newer. This is {sys.version.split()[0]}.")
+    python = sys.executable
+    if sys.version_info < (3, 11):  # noqa: UP036 - this process may be on an old Python
+        found = find_newer_python()
+        if not found:
+            fail(
+                f"Shortlist needs Python 3.11 or newer. This is {sys.version.split()[0]}.\n"
+                "  Install a newer one, then run this again:\n"
+                "    macOS:    brew install python@3.13\n"
+                "    Windows:  https://python.org/downloads (check \"Add to PATH\" during install)\n"
+                "    Linux:    use your package manager, e.g. sudo apt install python3.11"
+            )
+        say(f"This terminal's Python is {sys.version.split()[0]}; using {found} instead.")
+        python = found
     if not venv_python().exists():
         say("Creating a Python environment in .venv")
-        venv.create(VENV, with_pip=True)
+        run([python, "-m", "venv", str(VENV)])
     marker = VENV / ".requirements-hash"
     wanted = fingerprint(BACKEND / "requirements.txt")
     if not marker.exists() or marker.read_text() != wanted:
