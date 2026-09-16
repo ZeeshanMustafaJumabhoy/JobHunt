@@ -1,7 +1,8 @@
 import { ChevronDown, CircleAlert, History, Radar, Square } from 'lucide-react'
 import { useState } from 'react'
 import type { RunRecord, RunState } from '../api'
-import { Button, IconTile, Spinner } from '../ui/ui'
+import { Loader } from '../ui/Loader'
+import { Button, IconTile } from '../ui/ui'
 
 function when(iso: string): string {
   const d = new Date(iso)
@@ -66,17 +67,19 @@ export function RunPanel({
 
   return (
     <section aria-label="Search" className="card overflow-hidden">
-      <div className="flex flex-wrap items-center gap-4 p-5">
-        {run.running ? (
-          <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-brand-soft text-brand">
-            <Spinner className="size-5" />
-          </span>
-        ) : (
-          <IconTile icon={failed ? CircleAlert : last ? History : Radar} tone={failed ? 'danger' : 'brand'} />
-        )}
-        <div className="min-w-0 flex-1" aria-live="polite">
-          <p className="truncate font-medium">{title}</p>
-          <p className="text-sm text-muted">{summary}</p>
+      <div className="flex flex-col gap-4 p-5 sm:flex-row sm:items-center">
+        <div className="flex min-w-0 items-center gap-4 sm:flex-1">
+          {run.running ? (
+            <div className="shrink-0">
+              <Loader size={28} />
+            </div>
+          ) : (
+            <IconTile icon={failed ? CircleAlert : last ? History : Radar} tone={failed ? 'danger' : 'brand'} />
+          )}
+          <div className="min-w-0 flex-1" aria-live="polite">
+            <p className="truncate font-medium">{title}</p>
+            <p className="text-sm text-muted">{summary}</p>
+          </div>
         </div>
         <div className="flex items-center gap-2">
           {(run.running || last?.stats.rejected) && (

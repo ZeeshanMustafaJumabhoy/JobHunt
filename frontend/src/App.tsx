@@ -4,8 +4,10 @@ import { api, ApiError, type AppState, type Reference } from './api'
 import { Dashboard } from './jobs/Dashboard'
 import { AtsPortal } from './resume/AtsPortal'
 import { Settings } from './settings/Settings'
+import { isPreviewMode } from './setup/preview'
 import { Setup } from './setup/Setup'
-import { Button, Logo, Skeleton, ThemeToggle } from './ui/ui'
+import { Loader } from './ui/Loader'
+import { Badge, Button, Logo, ThemeToggle } from './ui/ui'
 
 type Page = 'jobs' | 'resume' | 'settings'
 
@@ -26,6 +28,9 @@ export default function App() {
   const [reference, setReference] = useState<Reference | null>(null)
   const [error, setError] = useState('')
   const [page, setPage] = useState<Page>(pageFromHash)
+  // Preview mode never really finishes setup server-side, so this is the only
+  // record that "Run my first search" was clicked, letting the dashboard show.
+  const [previewDone, setPreviewDone] = useState(false)
 
   const load = useCallback(async () => {
     setError('')
@@ -64,21 +69,23 @@ export default function App() {
 
   if (!state) {
     return (
-      <div className="mx-auto max-w-2xl space-y-4 px-5 pt-28" role="status" aria-label="Opening Shortlist">
-        <Skeleton className="h-10 w-3/4" />
-        <Skeleton className="h-4 w-full" />
-        <Skeleton className="h-4 w-5/6" />
+      <div className="grid min-h-dvh place-items-center px-5" role="status" aria-label="Opening Shortlist">
+        <Loader size={64} />
       </div>
     )
   }
 
-  if (!state.profile.setup_complete) {
+  if (!state.profile.setup_complete && !previewDone) {
     return (
       <Setup
         state={state}
         reference={reference}
         onState={setState}
         onDone={() => {
+          if (isPreviewMode()) {
+            setPreviewDone(true)
+            return
+          }
           window.location.hash = '#/jobs'
           void load()
         }}
@@ -95,6 +102,11 @@ export default function App() {
             <Logo />
           </a>
           <div className="flex items-center gap-2">
+            {isPreviewMode() && (
+              <span className="hidden sm:inline-flex">
+                <Badge tone="warning">Preview — sample jobs</Badge>
+              </span>
+            )}
             <nav aria-label="Main" className="flex gap-1">
               <a href="#/jobs" aria-current={page === 'jobs' ? 'page' : undefined} className={navClass(page === 'jobs')}>
                 <LayoutList aria-hidden className="size-4" />

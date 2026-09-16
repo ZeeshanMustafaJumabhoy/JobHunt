@@ -2,6 +2,7 @@ import { ArrowLeft, Check } from 'lucide-react'
 import { useState, type FormEvent, type ReactNode } from 'react'
 import { Button, Notice } from '../ui/ui'
 import { useFlow } from './flow'
+import { isPreviewMode } from './preview'
 
 /**
  * Frame for one question. `onSubmit` saves the answer and returns normally on
@@ -19,6 +20,7 @@ export function StepShell({
   onSkip,
   showBack = true,
   heroLayout = false,
+  alwaysSubmit = false,
 }: {
   /** Centered, larger treatment for the welcome screen. */
   heroLayout?: boolean
@@ -32,11 +34,15 @@ export function StepShell({
   skipLabel?: string
   onSkip?: () => Promise<void> | void
   showBack?: boolean
+  /** Run onSubmit even in preview mode. For the one step (Review) whose
+   * onSubmit is itself preview-aware, unlike every other step's real save. */
+  alwaysSubmit?: boolean
 }) {
   const { mode, next, back } = useFlow()
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
   const [saved, setSaved] = useState(false)
+  const preview = isPreviewMode()
 
   async function attempt(action: () => Promise<void> | void) {
     setBusy(true)
@@ -53,9 +59,11 @@ export function StepShell({
 
   function submit(e: FormEvent) {
     e.preventDefault()
-    if (!canSubmit || busy) return
+    if (!(canSubmit || preview) || busy) return
     void attempt(async () => {
-      await onSubmit?.()
+      // Preview mode is a look-around, not a real answer: skip the save so an
+      // empty or invalid field can never block moving to the next step.
+      if (!preview || alwaysSubmit) await onSubmit?.()
       if (mode === 'settings') setSaved(true)
       else next()
     })
@@ -109,7 +117,7 @@ export function StepShell({
             </Button>
           )}
           {(onSubmit || setup) && (
-            <Button type="submit" busy={busy} disabled={!canSubmit}>
+            <Button type="submit" busy={busy} disabled={!(canSubmit || preview)}>
               {setup ? submitLabel : 'Save'}
             </Button>
           )}

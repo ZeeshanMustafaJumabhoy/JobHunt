@@ -2,8 +2,10 @@ import { Bookmark, CircleCheck, Inbox, Sparkles, type LucideIcon } from 'lucide-
 import { AnimatePresence } from 'motion/react'
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
 import { api, ApiError, type AppState, type Job, type JobStatus, type Tier } from '../api'
+import { isPreviewMode } from '../setup/preview'
 import { Button, IconTile, Skeleton, selectClass } from '../ui/ui'
 import { JobRow } from './JobRow'
+import { PREVIEW_JOBS, PREVIEW_LAST_RUN, PREVIEW_RUN_STATE, PREVIEW_RUNNING_STATE } from './previewJobs'
 import { RunPanel } from './RunPanel'
 
 const VIEWS: { status: JobStatus; label: string }[] = [
@@ -45,24 +47,35 @@ function Stat({ icon, tone, label, value, hint }: { icon: LucideIcon; tone: 'bra
 }
 
 export function Dashboard({ state, onState }: { state: AppState; onState: (s: AppState) => void }) {
+  const preview = isPreviewMode()
   const [view, setView] = useState<JobStatus>('new')
   const [place, setPlace] = useState(-1)
   const [jobs, setJobs] = useState<Job[] | null>(null)
+  // A local, in-memory copy so preview mode can save/apply/hide without a
+  // real backend — never touched when not in preview mode.
+  const [previewAll, setPreviewAll] = useState<Job[]>(() => PREVIEW_JOBS.map((j) => ({ ...j })))
   const [error, setError] = useState('')
   const [runError, setRunError] = useState('')
   const [starting, setStarting] = useState(false)
+  // A fake run for preview mode: no real search, just something to watch.
+  const [previewSearching, setPreviewSearching] = useState(false)
   const stateRef = useRef(state)
   stateRef.current = state
 
   const minScore = state.profile.min_match_score
   const loadJobs = useCallback(async () => {
+    if (preview) {
+      setJobs(previewAll.filter((j) => j.status === view))
+      setError('')
+      return
+    }
     try {
       setJobs((await api.jobs({ status: view, minScore })).jobs)
       setError('')
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'Loading jobs failed.')
     }
-  }, [view, minScore])
+  }, [view, minScore, preview, previewAll])
 
   useEffect(() => {
     setJobs(null)
@@ -94,6 +107,12 @@ export function Dashboard({ state, onState }: { state: AppState; onState: (s: Ap
   }, [running, loadJobs, onState])
 
   async function start() {
+    if (preview) {
+      setRunError('')
+      setPreviewSearching(true)
+      setTimeout(() => setPreviewSearching(false), 4000)
+      return
+    }
     setStarting(true)
     setRunError('')
     try {
@@ -107,10 +126,18 @@ export function Dashboard({ state, onState }: { state: AppState; onState: (s: Ap
   }
 
   async function stop() {
+    if (preview) {
+      setPreviewSearching(false)
+      return
+    }
     onState({ ...stateRef.current, run: await api.stopRun() })
   }
 
   async function changeStatus(job: Job, status: JobStatus) {
+    if (preview) {
+      setPreviewAll((cur) => cur.map((j) => (j.id === job.id ? { ...j, status } : j)))
+      return
+    }
     const before = jobs
     setJobs((cur) => cur?.filter((j) => j.id !== job.id) ?? null)
     try {
@@ -123,7 +150,11 @@ export function Dashboard({ state, onState }: { state: AppState; onState: (s: Ap
 
   const visible = (jobs ?? []).filter((j) => place === -1 || j.bucket === place)
   const firstName = state.profile.name.split(' ')[0]
-  const counts = state.counts
+  const counts = preview
+    ? previewAll.reduce<Record<string, number>>((acc, j) => ({ ...acc, [j.status]: (acc[j.status] ?? 0) + 1 }), {})
+    : state.counts
+  const run = preview ? (previewSearching ? PREVIEW_RUNNING_STATE : PREVIEW_RUN_STATE) : state.run
+  const lastRun = preview ? PREVIEW_LAST_RUN : state.last_run
   const applyNow = view === 'new' && jobs ? jobs.filter((j) => j.tier === 'apply').length : null
 
   return (
@@ -146,7 +177,7 @@ export function Dashboard({ state, onState }: { state: AppState; onState: (s: Ap
       </div>
 
       <div className="mt-3">
-        <RunPanel run={state.run} last={state.last_run} onStart={start} onStop={stop} starting={starting} error={runError} />
+        <RunPanel run={run} last={lastRun} onStart={start} onStop={stop} starting={starting} error={runError} />
       </div>
 
       <div className="mt-8 flex flex-wrap items-center justify-between gap-3">
@@ -209,7 +240,7 @@ export function Dashboard({ state, onState }: { state: AppState; onState: (s: Ap
           ))}
         </div>
       ) : visible.length === 0 ? (
-        <Empty view={view} running={state.run.running} filtered={place !== -1 && (jobs?.length ?? 0) > 0} onShowAll={() => setPlace(-1)} />
+        <Empty view={view} running={run.running} filtered={place !== -1 && (jobs?.length ?? 0) > 0} onShowAll={() => setPlace(-1)} />
       ) : view === 'new' ? (
         TIERS.map(({ tier, title, note, dot }) => {
           const group = visible.filter((j) => j.tier === tier)
