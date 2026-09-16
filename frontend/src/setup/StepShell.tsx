@@ -3,6 +3,7 @@ import { useState, type FormEvent, type ReactNode } from 'react'
 import { Button, Notice } from '../ui/ui'
 import { useFlow } from './flow'
 import { isPreviewMode } from '../preview'
+import { PreviewNotice } from './PreviewNotice'
 
 /**
  * Frame for one question. `onSubmit` saves the answer and returns normally on
@@ -96,6 +97,11 @@ export function StepShell({
           {title}
         </h1>
         {lede && <div className="mt-5 max-w-[56ch] text-lg leading-relaxed text-muted">{lede}</div>}
+        {preview && (
+          <div className="mt-6 w-full max-w-[56ch]">
+            <PreviewNotice />
+          </div>
+        )}
         <Button type="submit" busy={busy} className="mt-8 h-12 px-6 text-base">
           {submitLabel}
         </Button>
@@ -117,7 +123,12 @@ export function StepShell({
         {title}
       </Heading>
       {lede && <div className={`max-w-[62ch] text-muted ${setup ? 'mt-3 text-base leading-relaxed' : 'mt-1 text-sm'}`}>{lede}</div>}
-      {children && <div className={setup ? 'mt-8' : 'mt-6'}>{children}</div>}
+      {preview && (
+        <div className={setup ? 'mt-8 max-w-2xl' : 'mt-6 max-w-2xl'}>
+          <PreviewNotice />
+        </div>
+      )}
+      {children && <div className={setup ? (preview ? 'mt-2' : 'mt-8') : preview ? 'mt-2' : 'mt-6'}>{children}</div>}
 
       <div
         className={`flex flex-wrap items-center gap-3 ${
