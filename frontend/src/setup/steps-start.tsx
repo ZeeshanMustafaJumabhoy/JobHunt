@@ -1,8 +1,9 @@
 import { Briefcase, FileText, HandHeart, Lock, Mail, Plus, Radar, ShieldCheck, Sparkles, Upload } from 'lucide-react'
 import { useRef, useState, type DragEvent } from 'react'
-import { api, ApiError } from '../api'
+import { api, ApiError, type Profile } from '../api'
 import { TagInput } from '../ui/TagInput'
-import { Badge, Button, Chip, ExternalLink, Field, IconTile, Marked, Notice, Spinner } from '../ui/ui'
+import { Badge, Button, Chip, ExternalLink, Field, IconTile, Marked, Notice } from '../ui/ui'
+import { Loader } from '../ui/Loader'
 import { useFlow } from './flow'
 import { COMMON_JOB_TITLES } from './jobTitles'
 import { KeyForm } from './KeyForm'
@@ -12,6 +13,29 @@ import { StepShell } from './StepShell'
 /** Preview mode has no real resume to read, so it has nothing to suggest here
  * on its own — these stand in so the "suggested" UI is still visible to check. */
 const PREVIEW_SUGGESTED_TITLES = ['QA Engineer', 'SDET', 'Test Automation Engineer', 'QA Lead', 'Software Tester']
+
+/** A fake "AI read your resume" result, so preview mode has a Loader to
+ * actually watch instead of skipping straight to the result. Never persisted. */
+function fakeUpload(current: Profile): Promise<Profile> {
+  return new Promise((resolve) =>
+    setTimeout(
+      () =>
+        resolve({
+          ...current,
+          has_resume: true,
+          name: 'Sara Khan',
+          headline: 'QA Engineer, test automation',
+          summary:
+            'QA engineer with four years testing web applications, focused on test automation and release quality. Comfortable with Selenium, Python and CI pipelines.',
+          skills: ['Selenium', 'Python', 'CI/CD', 'Manual Testing', 'API Testing', 'Test Strategy'],
+          years_experience: 4,
+          seniority: 'mid',
+          suggested_titles: PREVIEW_SUGGESTED_TITLES,
+        }),
+      3000,
+    ),
+  )
+}
 
 const FEATURES = [
   { icon: Radar, title: 'Searches everywhere', text: 'Job boards, Google for Jobs and company career pages, every day.' },
@@ -199,7 +223,7 @@ export function ResumeStep() {
     setBusy(true)
     setError('')
     try {
-      const updated = await api.uploadResume(file)
+      const updated = isPreviewMode() ? await fakeUpload(p) : await api.uploadResume(file)
       setProfile(updated)
       setSkills(updated.skills)
       setYears(updated.years_experience?.toString() ?? '')
@@ -247,10 +271,7 @@ export function ResumeStep() {
         >
           {busy ? (
             <>
-              <span className="grid size-12 place-items-center rounded-2xl bg-brand-soft text-brand">
-                <Spinner className="size-6" />
-              </span>
-              <p className="font-medium">Reading your resume</p>
+              <Loader size={56} message="Reading your resume..." />
               <p className="text-sm text-muted">This takes up to half a minute.</p>
             </>
           ) : (

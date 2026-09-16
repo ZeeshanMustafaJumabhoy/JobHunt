@@ -1,9 +1,39 @@
 import { CircleAlert, CircleCheck, CircleX, FileSearch, ListChecks, RotateCcw, ScanLine } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { api, ApiError, type AppState, type AtsScan, type AtsStatus } from '../api'
+import { isPreviewMode } from '../setup/preview'
+import { Loader } from '../ui/Loader'
 import { Button, IconTile, Notice, ScoreRing, Skeleton } from '../ui/ui'
 
 const COOLDOWN_MS = 10 * 60 * 1000
+
+/** A fake scan result for preview mode, so there's a Loader to watch and a
+ * result to see afterward, without a real Groq key. Never persisted. */
+function fakeScan(): Promise<AtsScan> {
+  return new Promise((resolve) =>
+    setTimeout(
+      () =>
+        resolve({
+          scanned_at: new Date().toISOString(),
+          score: 72,
+          summary: 'Solid core skills, but bullets read as duties, not results.',
+          checks: [
+            { category: 'Keywords', status: 'warning', note: 'Missing Cypress and CI/CD, both common in QA postings.' },
+            { category: 'Formatting', status: 'good', note: 'Standard headings and plain text, reads cleanly.' },
+            { category: 'Impact and metrics', status: 'bad', note: 'No bullet includes a number or measurable result.' },
+            { category: 'Action verbs', status: 'warning', note: 'Uses "Responsible for" instead of a strong verb.' },
+            { category: 'Structure and length', status: 'good', note: 'Appropriate length for the experience shown.' },
+          ],
+          suggestions: [
+            'Replace "Responsible for manual testing" with a verb-led bullet that states a result.',
+            'Add Cypress and CI/CD explicitly if you have used them.',
+            'Quantify at least two achievements with a number or percentage.',
+          ],
+        }),
+      3000,
+    ),
+  )
+}
 
 function timeAgo(iso: string): string {
   const min = Math.floor((Date.now() - new Date(iso).getTime()) / 60000)
@@ -23,7 +53,8 @@ function goToResumeSettings() {
 }
 
 export function AtsPortal({ state }: { state: AppState }) {
-  const hasResume = state.profile.has_resume
+  const preview = isPreviewMode()
+  const hasResume = preview || state.profile.has_resume
   // undefined: still loading. null: loaded, never scanned.
   const [scan, setScan] = useState<AtsScan | null | undefined>(undefined)
   const [error, setError] = useState('')
@@ -32,11 +63,15 @@ export function AtsPortal({ state }: { state: AppState }) {
 
   useEffect(() => {
     if (!hasResume) return
+    if (preview) {
+      setScan(null)
+      return
+    }
     api
       .getResumeScan()
       .then((r) => setScan(r.scan))
       .catch((err) => setError(err instanceof ApiError ? err.message : 'Loading your last scan failed.'))
-  }, [hasResume])
+  }, [hasResume, preview])
 
   useEffect(() => {
     if (!scan) return
@@ -48,7 +83,7 @@ export function AtsPortal({ state }: { state: AppState }) {
     setBusy(true)
     setError('')
     try {
-      setScan((await api.scanResume()).scan)
+      setScan(preview ? await fakeScan() : (await api.scanResume()).scan)
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'Scanning failed.')
     } finally {
@@ -87,22 +122,32 @@ export function AtsPortal({ state }: { state: AppState }) {
           <Skeleton className="h-4 w-full" />
         </div>
       ) : scan === null ? (
-        <div className="card mt-6 flex flex-col items-center px-6 py-14 text-center">
-          <span className="grid size-14 place-items-center rounded-2xl bg-brand-soft text-brand">
-            <ScanLine aria-hidden className="size-7" />
-          </span>
-          <p className="mt-4 font-semibold tracking-tight">Not scanned yet</p>
-          <p className="mt-1 max-w-[48ch] text-sm text-muted">
-            See how your resume reads to an ATS scanner, and exactly what to fix before you apply.
-          </p>
-          <Button className="mt-5" onClick={() => void scanNow()} busy={busy}>
-            Scan my resume
-          </Button>
-          {error && (
-            <div className="mt-4">
-              <Notice tone="error">{error}</Notice>
-            </div>
-          )}
+        busy ? (
+          <div className="card mt-6 flex flex-col items-center px-6 py-16 text-center">
+            <Loader size={64} message="Scanning your resume..." />
+          </div>
+        ) : (
+          <div className="card mt-6 flex flex-col items-center px-6 py-14 text-center">
+            <span className="grid size-14 place-items-center rounded-2xl bg-brand-soft text-brand">
+              <ScanLine aria-hidden className="size-7" />
+            </span>
+            <p className="mt-4 font-semibold tracking-tight">Not scanned yet</p>
+            <p className="mt-1 max-w-[48ch] text-sm text-muted">
+              See how your resume reads to an ATS scanner, and exactly what to fix before you apply.
+            </p>
+            <Button className="mt-5" onClick={() => void scanNow()} busy={busy}>
+              Scan my resume
+            </Button>
+            {error && (
+              <div className="mt-4">
+                <Notice tone="error">{error}</Notice>
+              </div>
+            )}
+          </div>
+        )
+      ) : busy ? (
+        <div className="card mt-6 flex flex-col items-center px-6 py-16 text-center">
+          <Loader size={64} message="Scanning your resume..." />
         </div>
       ) : (
         <div className="mt-6 space-y-4">

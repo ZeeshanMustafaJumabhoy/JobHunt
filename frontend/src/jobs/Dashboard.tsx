@@ -5,7 +5,7 @@ import { api, ApiError, type AppState, type Job, type JobStatus, type Tier } fro
 import { isPreviewMode } from '../setup/preview'
 import { Button, IconTile, Skeleton, selectClass } from '../ui/ui'
 import { JobRow } from './JobRow'
-import { PREVIEW_JOBS, PREVIEW_LAST_RUN, PREVIEW_RUN_STATE } from './previewJobs'
+import { PREVIEW_JOBS, PREVIEW_LAST_RUN, PREVIEW_RUN_STATE, PREVIEW_RUNNING_STATE } from './previewJobs'
 import { RunPanel } from './RunPanel'
 
 const VIEWS: { status: JobStatus; label: string }[] = [
@@ -57,6 +57,8 @@ export function Dashboard({ state, onState }: { state: AppState; onState: (s: Ap
   const [error, setError] = useState('')
   const [runError, setRunError] = useState('')
   const [starting, setStarting] = useState(false)
+  // A fake run for preview mode: no real search, just something to watch.
+  const [previewSearching, setPreviewSearching] = useState(false)
   const stateRef = useRef(state)
   stateRef.current = state
 
@@ -105,6 +107,12 @@ export function Dashboard({ state, onState }: { state: AppState; onState: (s: Ap
   }, [running, loadJobs, onState])
 
   async function start() {
+    if (preview) {
+      setRunError('')
+      setPreviewSearching(true)
+      setTimeout(() => setPreviewSearching(false), 4000)
+      return
+    }
     setStarting(true)
     setRunError('')
     try {
@@ -118,6 +126,10 @@ export function Dashboard({ state, onState }: { state: AppState; onState: (s: Ap
   }
 
   async function stop() {
+    if (preview) {
+      setPreviewSearching(false)
+      return
+    }
     onState({ ...stateRef.current, run: await api.stopRun() })
   }
 
@@ -141,7 +153,7 @@ export function Dashboard({ state, onState }: { state: AppState; onState: (s: Ap
   const counts = preview
     ? previewAll.reduce<Record<string, number>>((acc, j) => ({ ...acc, [j.status]: (acc[j.status] ?? 0) + 1 }), {})
     : state.counts
-  const run = preview ? PREVIEW_RUN_STATE : state.run
+  const run = preview ? (previewSearching ? PREVIEW_RUNNING_STATE : PREVIEW_RUN_STATE) : state.run
   const lastRun = preview ? PREVIEW_LAST_RUN : state.last_run
   const applyNow = view === 'new' && jobs ? jobs.filter((j) => j.tier === 'apply').length : null
 

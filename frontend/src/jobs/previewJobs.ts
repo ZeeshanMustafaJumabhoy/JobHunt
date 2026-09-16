@@ -215,6 +215,22 @@ export const PREVIEW_RUN_STATE: RunState = {
   log: [],
 }
 
+/** Shown while "Search now" fakes a run in preview mode, so the loader is
+ * something you can actually watch instead of just reading about. */
+export const PREVIEW_RUNNING_STATE: RunState = {
+  running: true,
+  run_id: 9001,
+  phase: 'scoring',
+  message: 'Reading Senior QA Engineer at Acme Corp',
+  sources_done: 4,
+  sources_total: 4,
+  found: 42,
+  to_score: 30,
+  scored: 18,
+  matches: 4,
+  log: [],
+}
+
 export const PREVIEW_LAST_RUN: RunRecord = {
   id: 9001,
   started_at: new Date(Date.now() - 2 * 3600_000).toISOString(),
