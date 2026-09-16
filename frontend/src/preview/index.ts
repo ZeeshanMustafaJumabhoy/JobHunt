@@ -1,5 +1,5 @@
 import type { AppState, KeyStatus, Profile, Reference } from '../api'
-import { PREVIEW_COUNTRIES, PREVIEW_GROUPS } from './previewReference'
+import { PREVIEW_COUNTRIES, PREVIEW_GROUPS } from './countries'
 
 /** Add ?preview=1 to the URL to click through every setup step with no
  * validation and no saved data, just to look at the screens. Never active

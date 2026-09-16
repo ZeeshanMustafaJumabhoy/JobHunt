@@ -2,7 +2,7 @@ import { ArrowLeft, Check } from 'lucide-react'
 import { useState, type FormEvent, type ReactNode } from 'react'
 import { Button, Notice } from '../ui/ui'
 import { useFlow } from './flow'
-import { isPreviewMode } from './preview'
+import { isPreviewMode } from '../preview'
 
 /**
  * Frame for one question. `onSubmit` saves the answer and returns normally on

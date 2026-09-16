@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { api, type AppState, type KeyStatus, type Profile, type Reference } from '../api'
 import { Badge, Logo, ThemeToggle } from '../ui/ui'
 import { FlowProvider } from './flow'
-import { isPreviewMode } from './preview'
+import { isPreviewMode } from '../preview'
 import { EmailStep, ReviewStep, SourcesStep } from './steps-finish'
 import {
   ExclusionsStep,

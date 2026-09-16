@@ -2,10 +2,10 @@ import { Bookmark, CircleCheck, Inbox, Sparkles, type LucideIcon } from 'lucide-
 import { AnimatePresence } from 'motion/react'
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
 import { api, ApiError, type AppState, type Job, type JobStatus, type Tier } from '../api'
-import { isPreviewMode } from '../setup/preview'
+import { isPreviewMode } from '../preview'
+import { PREVIEW_JOBS, PREVIEW_LAST_RUN, PREVIEW_RUN_STATE, PREVIEW_RUNNING_STATE } from '../preview/jobs'
 import { Button, IconTile, Skeleton, selectClass } from '../ui/ui'
 import { JobRow } from './JobRow'
-import { PREVIEW_JOBS, PREVIEW_LAST_RUN, PREVIEW_RUN_STATE, PREVIEW_RUNNING_STATE } from './previewJobs'
 import { RunPanel } from './RunPanel'
 
 const VIEWS: { status: JobStatus; label: string }[] = [

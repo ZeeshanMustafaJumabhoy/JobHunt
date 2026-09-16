@@ -1,7 +1,7 @@
 import { CircleAlert, CircleCheck, CircleX, FileSearch, ListChecks, RotateCcw, ScanLine } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { api, ApiError, type AppState, type AtsScan, type AtsStatus } from '../api'
-import { isPreviewMode } from '../setup/preview'
+import { isPreviewMode } from '../preview'
 import { Loader } from '../ui/Loader'
 import { Button, IconTile, Notice, ScoreRing, Skeleton } from '../ui/ui'
 

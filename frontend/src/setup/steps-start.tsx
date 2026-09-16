@@ -7,7 +7,7 @@ import { Loader } from '../ui/Loader'
 import { useFlow } from './flow'
 import { COMMON_JOB_TITLES } from './jobTitles'
 import { KeyForm } from './KeyForm'
-import { isPreviewMode } from './preview'
+import { isPreviewMode } from '../preview'
 import { StepShell } from './StepShell'
 
 /** Preview mode has no real resume to read, so it has nothing to suggest here
