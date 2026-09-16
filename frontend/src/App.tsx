@@ -4,7 +4,7 @@ import { api, ApiError, type AppState, type Reference } from './api'
 import { Dashboard } from './jobs/Dashboard'
 import { AtsPortal } from './resume/AtsPortal'
 import { Settings } from './settings/Settings'
-import { isPreviewMode } from './setup/preview'
+import { isPreviewMode, PREVIEW_APP_STATE, PREVIEW_REFERENCE } from './setup/preview'
 import { Setup } from './setup/Setup'
 import { Loader } from './ui/Loader'
 import { Badge, Button, Logo, ThemeToggle } from './ui/ui'
@@ -34,6 +34,13 @@ export default function App() {
 
   const load = useCallback(async () => {
     setError('')
+    // Preview mode never touches a backend at all, so a static, backend-less
+    // deploy (e.g. Netlify) can still boot straight into it from a cold load.
+    if (isPreviewMode()) {
+      setState(PREVIEW_APP_STATE)
+      setReference(PREVIEW_REFERENCE)
+      return
+    }
     try {
       const [s, r] = await Promise.all([api.state(), api.reference()])
       setState(s)
