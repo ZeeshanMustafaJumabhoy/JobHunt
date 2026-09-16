@@ -56,22 +56,36 @@ All of them have free plans. Each key is tested against the real service before 
 
 ## How it works
 
-Shortlist is two small programs that talk to each other over HTTP, both running on your own machine:
+In plain words: Shortlist is really two small programs, both running on your own computer, that talk to each other.
 
-- **`backend/`** — a Python [FastAPI](https://fastapi.tiangolo.com/) server. It owns your profile, talks to the job sources and to Groq/OpenRouter, ranks and stores results in a local SQLite database (`data/shortlist.db`), and serves the built frontend. It only ever listens on `127.0.0.1`.
-- **`frontend/`** — a [React](https://react.dev/) + [Vite](https://vite.dev/) single-page app: the setup wizard, the dashboard, the resume score page. It talks to the backend under `/api/*`.
+- **The backend** is the "brain". It's a small Python program that remembers your resume and your answers, goes looking for jobs on your behalf, asks an AI to read each one, and saves the good ones. It never shows you anything directly — it just does the work.
+- **The frontend** is the "face". It's what you actually see in your browser: the setup questions, the list of jobs, the resume score page. Every button you click sends a message to the backend and shows you what comes back.
 
-A search run goes through the pipeline in `backend/shortlist/pipeline.py`:
+When you run `python start.py`, both start together: the backend quietly starts listening in the background, and your browser opens showing the frontend, which talks to the backend behind the scenes.
 
-1. **Search** every enabled source (`sources.py`) for your job titles.
-2. **Filter** out duplicates, postings you've already seen, and ones that fail free rule checks (title excludes, years required, location) — before spending any AI budget on them.
-3. **Bucket and prioritize** what's left by reachability (your target countries first, then worldwide remote, then home country, then everywhere else) and split your daily AI budget across those buckets.
-4. **Score** each posting with the AI (`llm.py`): fit, seniority, sponsorship, salary, and specific resume tips for that job.
-5. **Store** everything scoring above your match threshold (`store.py`), so the dashboard can show it and a later run never re-reads the same posting.
+When you click **Search now**, this is what happens, in order:
 
-The resume score page (`ats.py`) is a separate, on-demand check: it reads your resume text once and scores it against standard ATS rules — keywords, formatting, action verbs, quantified impact, structure — independent of any specific job.
+1. It looks for jobs matching your titles on every source you've turned on.
+2. It throws away jobs you've already seen, and any that obviously don't fit (wrong title, asks for too many years, wrong country).
+3. It sorts what's left by how reachable it actually is for you — your target countries first, then worldwide remote, then your home country, then everywhere else.
+4. For each job, it asks the AI: "does this person fit this job, and why?" — and gets back a score, a reason, whether it sponsors visas, and specific tips for that job.
+5. It saves every job that scores high enough to matter, so it shows up on your dashboard and a later search never wastes time reading it again.
 
-**Preview mode** (`frontend/src/preview/`) is a frontend-only way to click through every screen with sample data and no backend at all — that's what the hosted Netlify link above runs. Add `?preview=1` to any URL locally to try it the same way. It never calls a real API and never saves anything; without that flag the app behaves exactly as normal.
+The **Resume score** page works on its own: you click a button, it reads your resume once, and tells you how it would look to an automated résumé scanner (an ATS) — plus exactly what to fix.
+
+For anyone digging into the code, here's where each piece of that actually lives:
+
+| What | Where |
+|---|---|
+| The local API and the daily schedule | `backend/shortlist/api.py` |
+| The steps above: search, filter, sort, score, save | `backend/shortlist/pipeline.py` |
+| Every job source (boards, career pages) | `backend/shortlist/sources.py` |
+| Talking to Groq/OpenRouter to read resumes and score jobs | `backend/shortlist/llm.py` |
+| The resume-score checker | `backend/shortlist/ats.py` |
+| Saved jobs and run history (SQLite) | `backend/shortlist/store.py` |
+| The setup wizard, the dashboard, the resume score page | `frontend/src/setup/`, `frontend/src/jobs/`, `frontend/src/resume/` |
+
+**Preview mode** (`frontend/src/preview/`) is a frontend-only way to click through every screen with made-up sample data and no backend at all — that's what the hosted Netlify link above runs. Add `?preview=1` to any local URL to try it the same way. It never calls a real API and never saves anything; without that flag the app behaves exactly as normal.
 
 ## Project layout
 
@@ -107,18 +121,32 @@ frontend/
 
 ## Development
 
+`python start.py` is enough for normal use. The steps below are for working on the code itself — running each side on its own, with hot reload, and running the test suites.
+
+### The quick way: both sides at once
+
 ```bash
-python start.py --dev          # Vite with hot reload on :5173, API on :8421
+python start.py --dev          # frontend with hot reload on :5173, backend API on :8421
+```
 
-# backend
+### Backend only
+
+```bash
 cd backend
-../.venv/bin/python -m pip install -r requirements-dev.txt   # Windows: ..\.venv\Scripts\python
-../.venv/bin/python -m pytest
+../.venv/bin/python -m pip install -r requirements-dev.txt          # install dependencies (Windows: ..\.venv\Scripts\python)
+../.venv/bin/python -m uvicorn shortlist.api:app --host 127.0.0.1 --port 8421 --reload   # run it
+../.venv/bin/python -m pytest                                       # run its tests
+../.venv/bin/python -m ruff check shortlist tests                   # lint it
+```
 
-# frontend
+### Frontend only
+
+```bash
 cd frontend
-npm test                       # unit tests
-npx playwright install chromium
+npm install                    # install dependencies
+npm run dev                    # run it, hot reload on :5173
+npm test                       # run its unit tests
+npx playwright install chromium   # one-time setup, before the next command
 npm run test:e2e               # full setup flow and dashboard, desktop and mobile
 npm run lint && npm run typecheck
 ```
